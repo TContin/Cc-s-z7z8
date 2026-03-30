@@ -163,22 +163,22 @@ Page({
       const res = await this.request(`/api/user/usage-records?page=1&pageSize=30&userId=${apiConfig.userId}&startDate=${startDate}&endDate=${end}`)
       if (res.statusCode === 200) {
         const d = res.data
-        const records = d.data || d.records || d.list || []
+        const records = d.records || d.data || d.list || []
         if (Array.isArray(records)) {
           this.setData({
             records: records.slice(0, 30).map(r => ({
-              time: this.formatTime(r.createdAt || r.time || r.date || ''),
-              service: r.service || r.type || '--',
-              model: r.model || r.modelName || '--',
-              discount: r.discount || '--',
-              channel: r.channel || r.channelName || '--',
-              inputTokens: r.inputTokens || r.promptTokens || 0,
-              outputTokens: r.outputTokens || r.completionTokens || 0,
-              firstByte: r.firstByte != null ? Number(r.firstByte).toFixed(1) + 's' : '--',
-              duration: r.duration != null ? Number(r.duration).toFixed(1) + 's' : '--',
-              keyName: r.keyName || r.apiKeyName || '--',
-              cost: r.cost != null ? '-¥' + Math.abs(Number(r.cost)).toFixed(4) :
-                    r.amount != null ? '-¥' + Math.abs(Number(r.amount)).toFixed(4) : '--'
+              time: this.formatTime(r.timestamp || r.createdAt || ''),
+              service: r.service || '--',
+              model: r.modelName || r.model || '--',
+              discount: r.channelDiscount ? (Number(r.channelDiscount) * 10).toFixed(0) + '折' : '--',
+              channel: r.channelName || '--',
+              inputTokens: r.inputTokens || 0,
+              outputTokens: r.outputTokens || 0,
+              firstByte: r.firstByteLatencyMs != null ? (r.firstByteLatencyMs / 1000).toFixed(1) + 's' : '--',
+              duration: r.totalDurationMs != null ? (r.totalDurationMs / 1000).toFixed(1) + 's' : '--',
+              keyName: r.apiKeyName || '--',
+              cost: r.totalCostCNY != null ? '-¥' + Number(r.totalCostCNY).toFixed(4) :
+                    r.totalCost != null ? '-$' + Number(r.totalCost).toFixed(4) : '--'
             }))
           })
         }
