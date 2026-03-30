@@ -1,4 +1,4 @@
-const { getData, showToast, formatDate } = require('../../utils/util')
+const { getData, saveData, showToast, formatDate } = require('../../utils/util')
 
 Page({
   data: {
@@ -197,6 +197,15 @@ Page({
         name: 'apiProxy',
         data: { path, cookie: apiConfig.cookie },
         success: (res) => {
+          // 如果云函数返回了新 Cookie（token 被自动刷新了），更新本地存储
+          if (res.result.newCookie) {
+            const config = getData('apiConfig', {})
+            config.cookie = res.result.newCookie
+            config.updatedAt = new Date().toISOString()
+            saveData('apiConfig', config)
+            this.setData({ apiConfig: config })
+            console.log('Token 已自动刷新')
+          }
           resolve({
             statusCode: res.result.statusCode || 200,
             data: res.result.data
