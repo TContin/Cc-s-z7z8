@@ -19,6 +19,22 @@
       </view>
     </view>
 
+    <!-- Token 状态指示 -->
+    <view class="token-bar token-{{tokenStatus}}" wx:if="{{tokenStatus && tokenStatus !== 'valid'}}">
+      <text class="token-icon">{{tokenStatus === 'error' ? '⚠️' : tokenStatus === 'expired' ? '🔴' : '🟡'}}</text>
+      <text class="token-text">{{tokenStatusText}}</text>
+      <text class="token-action" wx:if="{{needReLogin}}" bindtap="onConfigTap">去更新 →</text>
+    </view>
+
+    <!-- Cookie 失效大提醒 -->
+    <view class="relogin-card" wx:if="{{needReLogin}}">
+      <text class="relogin-icon">🔑</text>
+      <text class="relogin-title">Cookie 已失效</text>
+      <text class="relogin-desc" wx:if="{{hasCredentials}}">自动登录失败，请检查账号密码是否正确</text>
+      <text class="relogin-desc" wx:else>建议在设置中保存账号密码，可实现永久自动刷新</text>
+      <button class="btn-primary relogin-btn" bindtap="onConfigTap">{{hasCredentials ? '检查设置' : '去设置账号密码'}}</button>
+    </view>
+
     <view class="loading-state" wx:if="{{loading}}">
       <text class="loading-text">加载中...</text>
     </view>

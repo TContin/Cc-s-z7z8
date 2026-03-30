@@ -24,7 +24,6 @@ function httpsRequest(options, postData) {
 // 从 Cookie 中提取 Supabase auth token（base64 编码的 JSON）
 function extractAuthFromCookie(cookie) {
   try {
-    // 匹配 sb-xxx-auth-token.0=base64-xxx 和 sb-xxx-auth-token.1=xxx
     const parts = []
     const regex = /sb-[^-]+-auth-token\.(\d+)=([^;]+)/g
     let match
@@ -35,14 +34,11 @@ function extractAuthFromCookie(cookie) {
 
     if (parts.length === 0) return null
 
-    // 拼接所有 part
     let tokenStr = parts.map(p => p.value).join('')
-    // 去掉 base64- 前缀
     if (tokenStr.startsWith('base64-')) {
       tokenStr = tokenStr.substring(7)
     }
 
-    // Base64 解码
     const decoded = Buffer.from(tokenStr, 'base64').toString('utf-8')
     return JSON.parse(decoded)
   } catch (e) {
@@ -51,51 +47,63 @@ function extractAuthFromCookie(cookie) {
   }
 }
 
-// 用 refresh_token 刷新 access_token
-async function refreshToken(refreshToken) {
+// 检测 access_token (JWT) 是否过期
+function isAccessTokenExpired(authData) {
+  if (!authData || !authData.expires_at) return true
+  const now = Math.floor(Date.now() / 1000)
+  return now >= authData.expires_at
+}
+
+// 用 refresh_token 刷新 access_token，返回详细结果
+async function refreshToken(rt) {
   const postData = JSON.stringify({
-    refresh_token: refreshToken,
+    refresh_token: rt,
     gotrue_meta_security: {}
   })
 
-  const res = await httpsRequest({
-    hostname: 'paokvdewkbzjeyawllii.supabase.co',
-    path: '/auth/v1/token?grant_type=refresh_token',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhb2t2ZGV3a2J6amV5YXdsbGlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjcwNjk2NTUsImV4cCI6MjA0MjY0NTY1NX0.kHOBgNQ88bsRkWJJejjMT0SQZkNc-jlFuSfqP6VJkkQ',
-      'Content-Length': Buffer.byteLength(postData)
-    }
-  }, postData)
+  try {
+    const res = await httpsRequest({
+      hostname: 'paokvdewkbzjeyawllii.supabase.co',
+      path: '/auth/v1/token?grant_type=refresh_token',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhb2t2ZGV3a2J6amV5YXdsbGlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDU2NzUsImV4cCI6MjA2NTQ4MTY3NX0.oa5BK39jM6YLMGRccvfSFw1pE01c2q8mZWlwKmiGkEs',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    }, postData)
 
-  if (res.statusCode === 200 && res.data.access_token) {
-    return res.data
+    if (res.statusCode === 200 && res.data.access_token) {
+      return { success: true, data: res.data }
+    }
+
+    // refresh_token 过期或无效，Supabase 返回 400/401
+    if (res.statusCode === 400 || res.statusCode === 401) {
+      const errMsg = (res.data && res.data.error_description) || (res.data && res.data.msg) || 'refresh_token 已过期'
+      return { success: false, expired: true, error: errMsg }
+    }
+
+    return { success: false, expired: false, error: `刷新失败(${res.statusCode})` }
+  } catch (err) {
+    return { success: false, expired: false, error: err.message }
   }
-  return null
 }
 
 // 用新 token 重建 Cookie
 function rebuildCookie(oldCookie, newAuthData) {
-  // 构建新的 auth token base64
   const tokenJson = JSON.stringify(newAuthData)
   const tokenBase64 = Buffer.from(tokenJson).toString('base64')
 
-  // 分片（Cookie 值有长度限制，原始也是分 .0 和 .1 的）
   const chunkSize = 3600
   const chunks = []
   for (let i = 0; i < tokenBase64.length; i += chunkSize) {
     chunks.push(tokenBase64.substring(i, i + chunkSize))
   }
 
-  // 替换 Cookie 中的 auth token 部分
   let newCookie = oldCookie
-  // 先删除旧的 auth token
   newCookie = newCookie.replace(/sb-[^-]+-auth-token\.\d+=[^;]+(;\s*)?/g, '')
-  // 清理多余分号
   newCookie = newCookie.replace(/;\s*;/g, ';').replace(/;\s*$/, '')
 
-  // 追加新 token
   const tokenName = 'sb-paokvdewkbzjeyawllii-auth-token'
   chunks.forEach((chunk, i) => {
     const prefix = i === 0 ? 'base64-' : ''
@@ -105,30 +113,157 @@ function rebuildCookie(oldCookie, newAuthData) {
   return newCookie
 }
 
-exports.main = async (event) => {
-  const { path, cookie, action } = event
+// 用邮箱密码登录 Supabase，获取全新 session
+async function passwordLogin(email, password) {
+  const postData = JSON.stringify({
+    email,
+    password,
+    gotrue_meta_security: {}
+  })
 
-  // 自动刷新 token
+  try {
+    console.log('[passwordLogin] 开始登录, email:', email)
+    const res = await httpsRequest({
+      hostname: 'paokvdewkbzjeyawllii.supabase.co',
+      path: '/auth/v1/token?grant_type=password',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhb2t2ZGV3a2J6amV5YXdsbGlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MDU2NzUsImV4cCI6MjA2NTQ4MTY3NX0.oa5BK39jM6YLMGRccvfSFw1pE01c2q8mZWlwKmiGkEs',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    }, postData)
+
+    console.log('[passwordLogin] 响应状态码:', res.statusCode)
+    console.log('[passwordLogin] 响应内容:', JSON.stringify(res.data).substring(0, 500))
+
+    if (res.statusCode === 200 && res.data.access_token) {
+      return { success: true, data: res.data }
+    }
+
+    // 构造详细错误信息
+    const errParts = []
+    if (res.data && res.data.error) errParts.push(res.data.error)
+    if (res.data && res.data.error_description) errParts.push(res.data.error_description)
+    if (res.data && res.data.msg) errParts.push(res.data.msg)
+    if (res.data && res.data.message) errParts.push(res.data.message)
+    const errMsg = errParts.length > 0 ? errParts.join(' - ') : '登录失败'
+
+    console.log('[passwordLogin] 登录失败:', errMsg)
+    return {
+      success: false,
+      error: errMsg + ` (HTTP ${res.statusCode})`,
+      detail: res.data // 把完整响应返回给前端
+    }
+  } catch (err) {
+    console.error('[passwordLogin] 异常:', err.message)
+    return { success: false, error: '网络异常: ' + err.message }
+  }
+}
+
+// 从全新 session 构建完整 Cookie（不依赖旧 Cookie）
+function buildCookieFromSession(authData) {
+  const tokenJson = JSON.stringify(authData)
+  const tokenBase64 = Buffer.from(tokenJson).toString('base64')
+
+  const chunkSize = 3600
+  const chunks = []
+  for (let i = 0; i < tokenBase64.length; i += chunkSize) {
+    chunks.push(tokenBase64.substring(i, i + chunkSize))
+  }
+
+  const tokenName = 'sb-paokvdewkbzjeyawllii-auth-token'
+  const parts = chunks.map((chunk, i) => {
+    const prefix = i === 0 ? 'base64-' : ''
+    return `${tokenName}.${i}=${prefix}${chunk}`
+  })
+
+  return parts.join('; ')
+}
+
+exports.main = async (event) => {
+  const { path, cookie, action, email, password } = event
+
+  // ========== 邮箱密码登录获取全新 Cookie ==========
+  if (action === 'passwordLogin') {
+    if (!email || !password) {
+      return { success: false, error: '请提供邮箱和密码' }
+    }
+
+    const result = await passwordLogin(email, password)
+    if (!result.success) {
+      return { success: false, error: result.error }
+    }
+
+    // 用登录返回的 session 构建新 Cookie
+    const newCookie = cookie
+      ? rebuildCookie(cookie, result.data)
+      : buildCookieFromSession(result.data)
+
+    // 提取 userId
+    const userId = (result.data.user && result.data.user.id) || ''
+
+    return {
+      success: true,
+      cookie: newCookie,
+      userId: userId,
+      expiresAt: result.data.expires_at,
+      expiresIn: result.data.expires_in || 3600
+    }
+  }
+
+  // ========== 主动刷新 Token ==========
   if (action === 'refreshToken') {
     try {
       const authData = extractAuthFromCookie(cookie)
       if (!authData || !authData.refresh_token) {
-        return { success: false, error: '无法提取 refresh_token' }
+        return { success: false, error: '无法提取 refresh_token', needReLogin: true }
       }
 
-      const newAuth = await refreshToken(authData.refresh_token)
-      if (!newAuth) {
-        return { success: false, error: '刷新 token 失败，请重新登录网站获取 Cookie' }
+      const result = await refreshToken(authData.refresh_token)
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error,
+          needReLogin: result.expired === true
+        }
       }
 
-      const newCookie = rebuildCookie(cookie, newAuth)
-      return { success: true, cookie: newCookie, expiresAt: newAuth.expires_at }
+      const newCookie = rebuildCookie(cookie, result.data)
+      return {
+        success: true,
+        cookie: newCookie,
+        expiresAt: result.data.expires_at,
+        expiresIn: result.data.expires_in || 3600
+      }
+    } catch (err) {
+      return { success: false, error: err.message, needReLogin: false }
+    }
+  }
+
+  // ========== 检查 Token 状态（不发请求） ==========
+  if (action === 'checkToken') {
+    try {
+      const authData = extractAuthFromCookie(cookie)
+      if (!authData) {
+        return { success: false, error: 'Cookie 格式无效', needReLogin: true }
+      }
+      const now = Math.floor(Date.now() / 1000)
+      const expiresAt = authData.expires_at || 0
+      const remaining = expiresAt - now
+      return {
+        success: true,
+        expiresAt,
+        remaining,
+        expired: remaining <= 0,
+        hasRefreshToken: !!authData.refresh_token
+      }
     } catch (err) {
       return { success: false, error: err.message }
     }
   }
 
-  // 正常代理请求
+  // ========== 正常代理请求 ==========
   const url = new URL('https://aicodewith.com' + path)
 
   try {
@@ -148,9 +283,9 @@ exports.main = async (event) => {
     if (res.statusCode === 401 || res.statusCode === 403) {
       const authData = extractAuthFromCookie(cookie)
       if (authData && authData.refresh_token) {
-        const newAuth = await refreshToken(authData.refresh_token)
-        if (newAuth) {
-          const newCookie = rebuildCookie(cookie, newAuth)
+        const refreshResult = await refreshToken(authData.refresh_token)
+        if (refreshResult.success) {
+          const newCookie = rebuildCookie(cookie, refreshResult.data)
           // 用新 Cookie 重试
           const retryRes = await httpsRequest({
             hostname: url.hostname,
@@ -167,9 +302,25 @@ exports.main = async (event) => {
             success: true,
             statusCode: retryRes.statusCode,
             data: retryRes.data,
-            newCookie: newCookie // 返回新 Cookie 让前端更新存储
+            newCookie: newCookie
           }
         }
+        // refresh_token 也失效了
+        return {
+          success: false,
+          statusCode: res.statusCode,
+          data: res.data,
+          needReLogin: refreshResult.expired === true,
+          error: refreshResult.error || 'Token 刷新失败'
+        }
+      }
+      // 没有 refresh_token
+      return {
+        success: false,
+        statusCode: res.statusCode,
+        data: res.data,
+        needReLogin: true,
+        error: 'Cookie 已失效且无法自动刷新'
       }
     }
 

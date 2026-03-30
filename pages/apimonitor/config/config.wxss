@@ -32,9 +32,7 @@
   background: rgba(0, 122, 255, 0.08);
 }
 
-.sync-icon {
-  font-size: 28rpx;
-}
+.sync-icon { font-size: 28rpx; }
 
 .sync-text {
   font-size: 24rpx;
@@ -42,9 +40,7 @@
   font-weight: 500;
 }
 
-.sync-btn.primary .sync-text {
-  color: var(--primary);
-}
+.sync-btn.primary .sync-text { color: var(--primary); }
 
 .sync-hint {
   font-size: 22rpx;
@@ -53,6 +49,32 @@
   display: block;
 }
 
+/* 模式切换 */
+.mode-tabs {
+  display: flex;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 6rpx;
+  margin-bottom: 20rpx;
+}
+
+.mode-tab {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  border-radius: calc(var(--radius) - 4rpx);
+  font-size: 26rpx;
+  color: var(--text-hint);
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.mode-tab.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* 表单 */
 .form-card {
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -65,9 +87,7 @@
   border-bottom: 1rpx solid var(--separator);
 }
 
-.form-row:last-child {
-  border-bottom: none;
-}
+.form-row:last-child { border-bottom: none; }
 
 .form-row-label {
   font-size: 26rpx;
@@ -97,6 +117,43 @@
   word-break: break-all;
 }
 
+/* 登录状态 */
+.login-status {
+  padding: 20rpx 24rpx;
+  border-radius: var(--radius);
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+}
+
+.login-status.login-success {
+  background: rgba(52, 199, 89, 0.1);
+  color: var(--success);
+}
+
+.login-status.login-fail {
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--danger);
+}
+
+.login-status:not(.login-success):not(.login-fail) {
+  background: rgba(255, 149, 0, 0.1);
+  color: var(--warning);
+}
+
+/* 凭证已保存状态 */
+.cred-status {
+  padding: 16rpx 24rpx;
+  border-radius: var(--radius);
+  margin-bottom: 16rpx;
+  background: rgba(52, 199, 89, 0.08);
+}
+
+.cred-ok {
+  font-size: 24rpx;
+  color: var(--success);
+}
+
+/* 提示 */
 .tip-card {
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -122,6 +179,25 @@
 .tip-warn {
   color: var(--warning);
   margin-top: 8rpx;
+}
+
+.tip-info {
+  color: var(--success);
+  margin-top: 8rpx;
+}
+
+/* 按钮 */
+.save-cred-btn {
+  margin-top: 16rpx;
+}
+
+.btn-secondary {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  font-size: 30rpx;
+  font-weight: 500;
+  border-radius: var(--radius);
+  border: 1rpx solid var(--separator) !important;
 }
 
 .del-btn {

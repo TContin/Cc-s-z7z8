@@ -14,31 +14,87 @@
     <text class="sync-hint">在电脑端配好后「上传」，手机端点「拉取」即可同步</text>
   </view>
 
-  <view class="form-card">
-    <view class="form-row">
-      <view class="form-row-label">名称</view>
-      <input class="form-row-input" placeholder="如：AI Code With" value="{{name}}" data-field="name" bindinput="onInput" />
+  <!-- 模式切换 -->
+  <view class="mode-tabs">
+    <view class="mode-tab {{configMode === 'auto' ? 'active' : ''}}" data-mode="auto" bindtap="switchMode">
+      <text>账号密码（推荐）</text>
     </view>
-    <view class="form-row">
-      <view class="form-row-label">User ID</view>
-      <input class="form-row-input mono" placeholder="从URL中获取的userId参数" value="{{userId}}" data-field="userId" bindinput="onInput" />
-    </view>
-    <view class="form-row">
-      <view class="form-row-label">Cookie</view>
-      <textarea class="form-row-textarea" placeholder="从浏览器开发者工具复制" value="{{cookie}}" data-field="cookie" bindinput="onInput" auto-height maxlength="-1" />
+    <view class="mode-tab {{configMode === 'manual' ? 'active' : ''}}" data-mode="manual" bindtap="switchMode">
+      <text>手动 Cookie</text>
     </view>
   </view>
 
-  <view class="tip-card">
-    <text class="tip-title">如何获取？</text>
-    <text class="tip-text">1. 浏览器登录 aicodewith.com 后台</text>
-    <text class="tip-text">2. 按 F12 → Network → 刷新页面</text>
-    <text class="tip-text">3. 点击 usage-summary 请求查看标头</text>
-    <text class="tip-text">4. User ID：URL 中 userId= 后面的值</text>
-    <text class="tip-text">5. Cookie：请求标头中完整 Cookie 值</text>
-    <text class="tip-text tip-warn">⚠️ Cookie 会过期，过期后需重新获取</text>
-  </view>
+  <!-- ========== 账号密码模式 ========== -->
+  <block wx:if="{{configMode === 'auto'}}">
+    <view class="form-card">
+      <view class="form-row">
+        <view class="form-row-label">名称</view>
+        <input class="form-row-input" placeholder="如：AI Code With" value="{{name}}" data-field="name" bindinput="onInput" />
+      </view>
+      <view class="form-row">
+        <view class="form-row-label">邮箱</view>
+        <input class="form-row-input" placeholder="aicodewith.com 注册邮箱" value="{{email}}" data-field="email" bindinput="onInput" type="text" />
+      </view>
+      <view class="form-row">
+        <view class="form-row-label">密码</view>
+        <input class="form-row-input" placeholder="aicodewith.com 登录密码" value="{{password}}" bindinput="onPasswordInput" password="{{true}}" />
+      </view>
+    </view>
 
-  <button class="btn-primary" bindtap="onSave">{{isEdit ? '保存修改' : '保存配置'}}</button>
-  <button class="btn-danger del-btn" wx:if="{{isEdit}}" bindtap="onDelete">删除配置</button>
+    <!-- 登录状态 -->
+    <view class="login-status login-{{loginStatus}}" wx:if="{{loginStatusText}}">
+      <text>{{loginStatus === 'success' ? '✅' : loginStatus === 'fail' ? '❌' : '⏳'}} {{loginStatusText}}</text>
+    </view>
+
+    <!-- 凭证状态 -->
+    <view class="cred-status" wx:if="{{hasCredentials && !loginStatusText}}">
+      <text class="cred-ok">✅ 登录凭证已保存，Cookie 过期时将自动重新登录</text>
+    </view>
+
+    <view class="tip-card">
+      <text class="tip-title">账号密码模式说明</text>
+      <text class="tip-text">填写 aicodewith.com 的登录邮箱和密码</text>
+      <text class="tip-text">系统将自动登录并获取 Cookie，无需手动复制</text>
+      <text class="tip-text tip-info">💡 当 Cookie 过期时会自动使用账号密码重新登录</text>
+      <text class="tip-text tip-warn">⚠️ 密码在本地加密存储，不会上传到云端</text>
+    </view>
+
+    <button class="btn-primary" bindtap="onTestLogin" loading="{{loginTesting}}">
+      {{loginTesting ? '登录中...' : hasCredentials ? '重新登录并获取 Cookie' : '登录并获取 Cookie'}}
+    </button>
+    <button class="btn-secondary save-cred-btn" bindtap="onSaveCredentials" wx:if="{{!loginTesting}}">仅保存凭证（不立即登录）</button>
+  </block>
+
+  <!-- ========== 手动 Cookie 模式 ========== -->
+  <block wx:if="{{configMode === 'manual'}}">
+    <view class="form-card">
+      <view class="form-row">
+        <view class="form-row-label">名称</view>
+        <input class="form-row-input" placeholder="如：AI Code With" value="{{name}}" data-field="name" bindinput="onInput" />
+      </view>
+      <view class="form-row">
+        <view class="form-row-label">User ID</view>
+        <input class="form-row-input mono" placeholder="从URL中获取的userId参数" value="{{userId}}" data-field="userId" bindinput="onInput" />
+      </view>
+      <view class="form-row">
+        <view class="form-row-label">Cookie</view>
+        <textarea class="form-row-textarea" placeholder="从浏览器开发者工具复制" value="{{cookie}}" data-field="cookie" bindinput="onInput" auto-height maxlength="-1" />
+      </view>
+    </view>
+
+    <view class="tip-card">
+      <text class="tip-title">如何获取？</text>
+      <text class="tip-text">1. 浏览器登录 aicodewith.com 后台</text>
+      <text class="tip-text">2. 按 F12 → Network → 刷新页面</text>
+      <text class="tip-text">3. 点击 usage-summary 请求查看标头</text>
+      <text class="tip-text">4. User ID：URL 中 userId= 后面的值</text>
+      <text class="tip-text">5. Cookie：请求标头中完整 Cookie 值</text>
+      <text class="tip-text tip-info">💡 建议切换到「账号密码」模式，可永久自动刷新</text>
+      <text class="tip-text tip-warn">⚠️ refresh_token 通常 7~30 天过期，届时需重新获取</text>
+    </view>
+
+    <button class="btn-primary" bindtap="onSave">{{isEdit ? '保存修改' : '保存配置'}}</button>
+  </block>
+
+  <button class="btn-danger del-btn" wx:if="{{isEdit || hasCredentials}}" bindtap="onDelete">删除所有配置</button>
 </view>
