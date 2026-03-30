@@ -19,6 +19,8 @@ async function uploadToCloud() {
     const passwords = wx.getStorageSync('passwords') || []
     const subscriptions = wx.getStorageSync('subscriptions') || []
     const settings = wx.getStorageSync('settings') || {}
+    const notes = wx.getStorageSync('notes') || []
+    const apiCredentials = wx.getStorageSync('apiCredentials') || null
 
     // 不上传访问密码到云端（安全考虑）
     const safeSettings = { ...settings }
@@ -28,6 +30,8 @@ async function uploadToCloud() {
       passwords,
       subscriptions,
       settings: safeSettings,
+      notes,
+      apiCredentials,
       updatedAt: new Date().toISOString()
     }
 
@@ -79,6 +83,8 @@ async function downloadFromCloud() {
         passwords: cloudData.passwords || [],
         subscriptions: cloudData.subscriptions || [],
         settings: cloudData.settings || {},
+        notes: cloudData.notes || [],
+        apiCredentials: cloudData.apiCredentials || null,
         updatedAt: cloudData.updatedAt || ''
       }
     }
@@ -95,11 +101,17 @@ async function syncFromCloud() {
   const result = await downloadFromCloud()
   if (!result.success) return result
 
-  const { passwords, subscriptions, settings } = result.data
+  const { passwords, subscriptions, settings, notes, apiCredentials } = result.data
 
   // 覆盖本地数据
   wx.setStorageSync('passwords', passwords)
   wx.setStorageSync('subscriptions', subscriptions)
+  if (notes && notes.length > 0) {
+    wx.setStorageSync('notes', notes)
+  }
+  if (apiCredentials) {
+    wx.setStorageSync('apiCredentials', apiCredentials)
+  }
 
   // 合并设置（保留本地密码）
   const localSettings = wx.getStorageSync('settings') || {}
