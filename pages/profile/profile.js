@@ -1,5 +1,5 @@
 const { getData, showConfirm, showToast, saveData } = require('../../utils/util')
-const { uploadToCloud, syncFromCloud } = require('../../utils/cloud')
+const { uploadToCloud, syncFromCloud, clearCloudData } = require('../../utils/cloud')
 
 Page({
   data: {
@@ -260,15 +260,38 @@ Page({
   },
 
   async onClearData() {
-    const confirm = await showConfirm('清除数据', '确定要清除所有本地数据吗？此操作不可恢复！')
-    if (confirm) {
-      const confirm2 = await showConfirm('二次确认', '真的要清除所有密码和订阅数据吗？')
-      if (confirm2) {
-        wx.setStorageSync('passwords', [])
-        wx.setStorageSync('subscriptions', [])
-        showToast('数据已清除')
-        this.loadStats()
+    const items = ['仅清除本地数据', '仅清除云端数据', '清除本地 + 云端数据']
+    const that = this
+
+    wx.showActionSheet({
+      itemList: items,
+      async success(res) {
+        const choice = res.tapIndex
+        const confirm = await showConfirm('确认清除', items[choice] + '，此操作不可恢复！')
+        if (!confirm) return
+
+        wx.showLoading({ title: '清除中...' })
+
+        // 清除本地
+        if (choice === 0 || choice === 2) {
+          wx.setStorageSync('passwords', [])
+          wx.setStorageSync('subscriptions', [])
+        }
+
+        // 清除云端
+        if (choice === 1 || choice === 2) {
+          const result = await clearCloudData()
+          if (!result.success) {
+            wx.hideLoading()
+            showToast(result.error || '云端清除失败')
+            return
+          }
+        }
+
+        wx.hideLoading()
+        showToast('已清除')
+        that.loadStats()
       }
-    }
+    })
   }
 })

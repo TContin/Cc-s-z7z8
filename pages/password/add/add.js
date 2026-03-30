@@ -12,10 +12,45 @@ Page({
     remark: '',
     category: '其他',
     icon: '🔑',
-    color: '#EDE9FF',
+    color: '#E3F0FF',
     categories: ['社交', '购物', '金融', '工作', '游戏', '其他'],
     categoryIndex: 5,
-    icons: ['🔑', '💳', '🏦', '🛒', '💬', '🎮', '💼', '📧', '🎵', '📱', '🖥️', '☁️'],
+    // 常用APP快捷模板
+    templates: [
+      { name: '微信', icon: '💬', color: '#E8F5E9', category: '社交' },
+      { name: 'QQ', icon: '🐧', color: '#E3F2FD', category: '社交' },
+      { name: '微博', icon: '📣', color: '#FFF3E0', category: '社交' },
+      { name: '小红书', icon: '📕', color: '#FFEBEE', category: '社交' },
+      { name: '抖音', icon: '🎵', color: '#1C1C1E', category: '社交' },
+      { name: 'GitHub', icon: '🐱', color: '#F5F5F5', category: '工作' },
+      { name: '淘宝', icon: '🛒', color: '#FFF3E0', category: '购物' },
+      { name: '京东', icon: '🐶', color: '#FFEBEE', category: '购物' },
+      { name: '拼多多', icon: '🔥', color: '#FFEBEE', category: '购物' },
+      { name: '支付宝', icon: '💰', color: '#E3F2FD', category: '金融' },
+      { name: '网易云音乐', icon: '🎶', color: '#FFEBEE', category: '其他' },
+      { name: 'QQ音乐', icon: '🎧', color: '#E8F5E9', category: '其他' },
+      { name: 'Spotify', icon: '💚', color: '#E8F5E9', category: '其他' },
+      { name: 'Apple', icon: '🍎', color: '#F5F5F5', category: '其他' },
+      { name: '腾讯视频', icon: '📺', color: '#E3F2FD', category: '其他' },
+      { name: '爱奇艺', icon: '🎬', color: '#E8F5E9', category: '其他' },
+      { name: 'B站', icon: '📱', color: '#FCE4EC', category: '其他' },
+      { name: 'Netflix', icon: '🎞️', color: '#FFEBEE', category: '其他' },
+      { name: 'Steam', icon: '🎮', color: '#E8EAF6', category: '游戏' },
+      { name: 'Epic', icon: '🕹️', color: '#F5F5F5', category: '游戏' },
+      { name: '美团', icon: '🍽️', color: '#FFF8E1', category: '购物' },
+      { name: '饿了么', icon: '🥡', color: '#E3F2FD', category: '购物' },
+      { name: '百度', icon: '🔍', color: '#E3F2FD', category: '其他' },
+      { name: '钉钉', icon: '📌', color: '#E3F2FD', category: '工作' },
+      { name: '飞书', icon: '🕊️', color: '#E3F2FD', category: '工作' },
+      { name: 'Gmail', icon: '📧', color: '#FFEBEE', category: '工作' },
+      { name: 'Outlook', icon: '📨', color: '#E3F2FD', category: '工作' },
+      { name: '知乎', icon: '💡', color: '#E3F2FD', category: '社交' },
+      { name: 'Twitter/X', icon: '🐦', color: '#E3F2FD', category: '社交' },
+      { name: 'Instagram', icon: '📸', color: '#FCE4EC', category: '社交' },
+      { name: 'Telegram', icon: '✈️', color: '#E3F2FD', category: '社交' },
+    ],
+    showTemplates: false,
+    icons: ['🔑', '💬', '🐧', '📕', '🎵', '🐱', '🛒', '🐶', '💰', '🎶', '🎧', '📺', '🎬', '📱', '🎮', '🔍', '📌', '📧', '💡', '📸', '🍎', '🎞️', '🕹️', '🍽️', '📣', '🔥', '💚', '✈️', '🐦', '🕊️', '📨', '🥡', '💳', '🏦', '💼', '☁️', '🖥️', '🔐'],
     showPassword: false,
     showIconPicker: false
   },
@@ -78,6 +113,23 @@ Page({
   onIconSelect(e) {
     const icon = e.currentTarget.dataset.icon
     this.setData({ icon, showIconPicker: false })
+  },
+
+  toggleTemplates() {
+    this.setData({ showTemplates: !this.data.showTemplates })
+  },
+
+  onTemplateTap(e) {
+    const tpl = e.currentTarget.dataset.tpl
+    const categoryIndex = this.data.categories.indexOf(tpl.category)
+    this.setData({
+      platform: tpl.name,
+      icon: tpl.icon,
+      color: tpl.color,
+      category: tpl.category,
+      categoryIndex: categoryIndex >= 0 ? categoryIndex : 5,
+      showTemplates: false
+    })
   },
 
   generatePassword() {

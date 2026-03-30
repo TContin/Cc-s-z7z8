@@ -3,6 +3,57 @@
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 
+/* 快捷模板 */
+.template-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 28rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  margin-bottom: 16rpx;
+}
+
+.tpl-toggle-text {
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.tpl-toggle-arrow {
+  font-size: 24rpx;
+  color: var(--primary);
+}
+
+.template-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  padding: 20rpx 24rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  margin-bottom: 16rpx;
+  max-height: 480rpx;
+  overflow-y: auto;
+}
+
+.template-item {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 10rpx 18rpx;
+  background: var(--bg-page);
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+
+.tpl-icon {
+  font-size: 24rpx;
+}
+
+.tpl-name {
+  color: var(--text-primary);
+}
+
 /* 图标选择器 */
 .icon-selector {
   display: flex;

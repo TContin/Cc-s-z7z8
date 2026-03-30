@@ -114,6 +114,31 @@ async function syncFromCloud() {
 }
 
 /**
+ * 清除云端数据
+ */
+async function clearCloudData() {
+  try {
+    const db = wx.cloud.database()
+    const { result } = await wx.cloud.callFunction({ name: 'getOpenId' })
+    const openid = result.openid
+
+    const { data: existing } = await db.collection(COLLECTION_NAME)
+      .where({ _openid: openid })
+      .limit(1)
+      .get()
+
+    if (existing.length > 0) {
+      await db.collection(COLLECTION_NAME).doc(existing[0]._id).remove()
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error('清除云端数据失败:', err)
+    return { success: false, error: err.message || '清除失败' }
+  }
+}
+
+/**
  * 自动上传（设置变更时调用）
  */
 async function autoUploadIfEnabled() {
@@ -128,5 +153,6 @@ module.exports = {
   uploadToCloud,
   downloadFromCloud,
   syncFromCloud,
+  clearCloudData,
   autoUploadIfEnabled
 }

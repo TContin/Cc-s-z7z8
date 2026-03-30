@@ -1,4 +1,23 @@
 <view class="page-add">
+  <!-- 快速选择常用APP -->
+  <view class="template-toggle" bindtap="toggleTemplates">
+    <text class="tpl-toggle-text">快速选择常用平台</text>
+    <text class="tpl-toggle-arrow">{{showTemplates ? '收起' : '展开'}}</text>
+  </view>
+
+  <view class="template-grid" wx:if="{{showTemplates}}">
+    <view 
+      class="template-item"
+      wx:for="{{templates}}"
+      wx:key="name"
+      data-tpl="{{item}}"
+      bindtap="onTemplateTap"
+    >
+      <text class="tpl-icon">{{item.icon}}</text>
+      <text class="tpl-name">{{item.name}}</text>
+    </view>
+  </view>
+
   <!-- 图标选择 -->
   <view class="icon-selector" bindtap="toggleIconPicker">
     <view class="selected-icon" style="background: {{color}}">
@@ -21,7 +40,7 @@
   <view class="form-card">
     <view class="form-row">
       <view class="form-row-label">平台名称</view>
-      <input class="form-row-input" placeholder="如：微信、淘宝" value="{{platform}}" data-field="platform" bindinput="onInput" />
+      <input class="form-row-input" placeholder="如：微信、GitHub" value="{{platform}}" data-field="platform" bindinput="onInput" />
     </view>
     <view class="form-row">
       <view class="form-row-label">账号</view>
