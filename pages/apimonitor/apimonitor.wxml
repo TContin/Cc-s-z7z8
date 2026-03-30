@@ -3,11 +3,10 @@
   <view class="empty-state" wx:if="{{!configured}}">
     <text class="empty-icon">📡</text>
     <text class="empty-text">尚未配置 API</text>
-    <text class="empty-sub">需要配置 Cookie 和 UserId 才能获取数据</text>
+    <text class="empty-sub">需要配置 Cookie 和 UserId</text>
     <button class="btn-primary setup-btn" bindtap="onConfigTap">去配置</button>
   </view>
 
-  <!-- 已配置 -->
   <block wx:else>
     <view class="top-bar">
       <view class="top-left">
@@ -25,53 +24,77 @@
     </view>
 
     <block wx:else>
-      <!-- 概览卡片 -->
-      <view class="overview-grid" wx:if="{{summary}}">
-        <view class="overview-card highlight">
-          <text class="ov-label">节省金额</text>
-          <text class="ov-value success">{{summary.savedAmount}}</text>
-          <text class="ov-sub" wx:if="{{summary.savedPercent !== '--'}}">省{{summary.savedPercent}}</text>
+      <!-- ===== 节省金额高亮 ===== -->
+      <view class="save-card" wx:if="{{summary}}">
+        <view class="save-left">
+          <text class="save-label">节省金额</text>
+          <text class="save-badge" wx:if="{{summary.savedPercent !== '--'}}">省{{summary.savedPercent}}</text>
         </view>
+        <text class="save-amount">{{summary.savedAmount}}</text>
+        <view class="save-detail">
+          <text>官方 {{summary.officialPrice}}</text>
+          <text class="save-sep">→</text>
+          <text>实付 {{summary.actualCost}}</text>
+          <text class="save-sep">·</text>
+          <text>日均 {{summary.avgDaily}}</text>
+        </view>
+      </view>
+
+      <!-- ===== 核心指标 ===== -->
+      <view class="overview-grid" wx:if="{{summary}}">
         <view class="overview-card">
           <text class="ov-label">Token 用量</text>
           <text class="ov-value primary">{{summary.totalTokens}}</text>
-          <text class="ov-sub">输入{{summary.inputTokens}} 输出{{summary.outputTokens}}</text>
+          <text class="ov-sub">入{{summary.inputTokens}} 出{{summary.outputTokens}}</text>
+        </view>
+        <view class="overview-card">
+          <text class="ov-label">缓存命中率</text>
+          <text class="ov-value success">{{summary.cacheRate}}</text>
         </view>
         <view class="overview-card">
           <text class="ov-label">累计时长</text>
-          <text class="ov-value">{{summary.totalHours}} 小时</text>
+          <text class="ov-value">{{summary.totalHours}}h</text>
         </view>
         <view class="overview-card">
           <text class="ov-label">请求次数</text>
           <text class="ov-value">{{summary.totalRequests}}</text>
-        </view>
-        <view class="overview-card">
-          <text class="ov-label">官方价格</text>
-          <text class="ov-value">{{summary.officialPrice}}</text>
-        </view>
-        <view class="overview-card">
-          <text class="ov-label">实际支付</text>
-          <text class="ov-value danger">{{summary.actualCost}}</text>
+          <text class="ov-sub">日均 {{summary.dailyRequests}}</text>
         </view>
       </view>
 
-      <!-- 密钥状态 -->
+      <!-- ===== 模型分布 ===== -->
+      <view class="section-title" wx:if="{{models.length > 0}}">模型使用分布</view>
+      <view class="ios-group" wx:if="{{models.length > 0}}">
+        <view class="model-item" wx:for="{{models}}" wx:key="name">
+          <view class="model-bar" style="background: {{item.color}}; width: 8rpx; height: 100%;"></view>
+          <view class="model-info">
+            <text class="model-name">{{item.name}}</text>
+            <text class="model-tokens">{{item.tokens}} tokens</text>
+          </view>
+          <view class="model-right">
+            <text class="model-cost">{{item.cost}}</text>
+            <text class="model-req">{{item.requests}} 次</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- ===== 密钥状态 ===== -->
       <view class="section-title" wx:if="{{keys.length > 0}}">密钥状态</view>
       <view class="ios-group" wx:if="{{keys.length > 0}}">
         <view class="key-item" wx:for="{{keys}}" wx:key="name">
           <view class="key-header">
-            <view class="key-name">{{item.name}}</view>
-            <view class="key-status {{item.isActive ? 'active' : 'inactive'}}">{{item.status}}</view>
+            <text class="key-name">{{item.name}}</text>
+            <text class="key-status {{item.isActive ? 'active' : 'inactive'}}">{{item.status}}</text>
           </view>
-          <view class="key-id">{{item.key}}</view>
+          <text class="key-id">{{item.key}}</text>
           <view class="key-stats">
             <view class="key-stat">
               <text class="ks-value">{{item.calls}}</text>
-              <text class="ks-label">调用次数</text>
+              <text class="ks-label">调用</text>
             </view>
             <view class="key-stat">
               <text class="ks-value">{{item.todayCost}}</text>
-              <text class="ks-label">今日消耗</text>
+              <text class="ks-label">今日</text>
             </view>
             <view class="key-stat">
               <text class="ks-value">{{item.weekCost}}</text>
@@ -81,7 +104,7 @@
         </view>
       </view>
 
-      <!-- 使用记录 -->
+      <!-- ===== 使用记录 ===== -->
       <view class="section-title" wx:if="{{records.length > 0}}">使用记录（近7天）</view>
       <view class="ios-group" wx:if="{{records.length > 0}}">
         <view class="record-item" wx:for="{{records}}" wx:key="index">
@@ -95,16 +118,15 @@
           </view>
           <view class="rec-time-row">
             <text class="rec-time">{{item.time}}</text>
-            <text class="rec-duration" wx:if="{{item.duration !== '--'}}">{{item.duration}}</text>
+            <text class="rec-duration">{{item.duration}}</text>
           </view>
         </view>
       </view>
 
-      <!-- 无数据 -->
       <view class="no-data" wx:if="{{!summary && keys.length === 0 && records.length === 0}}">
         <text class="no-data-icon">📊</text>
         <text class="no-data-text">暂无法获取数据</text>
-        <text class="no-data-sub">请检查 Cookie 和 UserId 是否正确</text>
+        <text class="no-data-sub">请检查配置是否正确</text>
       </view>
     </block>
   </block>

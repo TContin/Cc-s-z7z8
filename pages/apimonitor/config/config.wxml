@@ -1,4 +1,19 @@
 <view class="page-config">
+  <!-- 云端同步按钮 -->
+  <view class="sync-card">
+    <view class="sync-row">
+      <view class="sync-btn" bindtap="onUploadConfig">
+        <text class="sync-icon">☁️↑</text>
+        <text class="sync-text">上传配置到云端</text>
+      </view>
+      <view class="sync-btn primary" bindtap="onPullConfig">
+        <text class="sync-icon">☁️↓</text>
+        <text class="sync-text">从云端拉取配置</text>
+      </view>
+    </view>
+    <text class="sync-hint">在电脑端配好后「上传」，手机端点「拉取」即可同步</text>
+  </view>
+
   <view class="form-card">
     <view class="form-row">
       <view class="form-row-label">名称</view>
@@ -17,12 +32,11 @@
   <view class="tip-card">
     <text class="tip-title">如何获取？</text>
     <text class="tip-text">1. 浏览器登录 aicodewith.com 后台</text>
-    <text class="tip-text">2. 按 F12 打开开发者工具 → Network</text>
-    <text class="tip-text">3. 刷新页面，点击 usage-summary 请求</text>
-    <text class="tip-text">4. User ID：请求URL中 userId= 后面的值</text>
-    <text class="tip-text">5. Cookie：请求标头中 Cookie 字段的完整值</text>
-    <text class="tip-text tip-warn">⚠️ Cookie 会过期，过期后需要重新获取</text>
-    <text class="tip-text tip-warn">⚠️ 数据仅存储在本地，不会上传</text>
+    <text class="tip-text">2. 按 F12 → Network → 刷新页面</text>
+    <text class="tip-text">3. 点击 usage-summary 请求查看标头</text>
+    <text class="tip-text">4. User ID：URL 中 userId= 后面的值</text>
+    <text class="tip-text">5. Cookie：请求标头中完整 Cookie 值</text>
+    <text class="tip-text tip-warn">⚠️ Cookie 会过期，过期后需重新获取</text>
   </view>
 
   <button class="btn-primary" bindtap="onSave">{{isEdit ? '保存修改' : '保存配置'}}</button>

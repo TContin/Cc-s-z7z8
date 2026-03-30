@@ -3,6 +3,56 @@
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 
+/* 云端同步 */
+.sync-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 24rpx 28rpx;
+  margin-bottom: 20rpx;
+}
+
+.sync-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.sync-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 20rpx 0;
+  background: var(--bg-page);
+  border-radius: 16rpx;
+}
+
+.sync-btn.primary {
+  background: rgba(0, 122, 255, 0.08);
+}
+
+.sync-icon {
+  font-size: 28rpx;
+}
+
+.sync-text {
+  font-size: 24rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.sync-btn.primary .sync-text {
+  color: var(--primary);
+}
+
+.sync-hint {
+  font-size: 22rpx;
+  color: var(--text-hint);
+  text-align: center;
+  display: block;
+}
+
 .form-card {
   background: var(--bg-card);
   border-radius: var(--radius);
