@@ -326,14 +326,14 @@ exports.main = async (event) => {
         const startTime = toTcMonitorTime(new Date(now.getTime() - 10 * 60 * 1000))
         const endTime = toTcMonitorTime(now)
 
-        // 轻量服务器监控指标（注意和 CVM 不同）
+        // 轻量服务器监控指标（经 debugMonitor 验证有效的）
         const metrics = [
-          'CpuLoadPercent',    // CPU 利用率
-          'MemUsage',          // 内存利用率
-          'lanOuttraffic',     // 外网出带宽 (Mbps)
-          'lanIntraffic',      // 外网入带宽 (Mbps)
-          'DiskReadTraffic',   // 磁盘读流量 (KB/s)
-          'DiskWriteTraffic'   // 磁盘写流量 (KB/s)
+          'CPUUsage',         // CPU 利用率 (%)
+          'MemUsage',         // 内存利用率 (%)
+          'lanOuttraffic',    // 外网出带宽 (Mbps)
+          'lanIntraffic',     // 外网入带宽 (Mbps)
+          'DiskReadTraffic',  // 磁盘读流量 (KB/s)
+          'DiskWriteTraffic'  // 磁盘写流量 (KB/s)
         ]
 
         const parallelTasks = [
@@ -432,7 +432,7 @@ exports.main = async (event) => {
           }),
           // 实时监控（主服务器）
           monitor: {
-            cpuPercent: monitorMap['CpuLoadPercent'] != null ? Number(monitorMap['CpuLoadPercent']).toFixed(3) : null,
+            cpuPercent: monitorMap['CPUUsage'] != null ? Number(monitorMap['CPUUsage']).toFixed(3) : null,
             memPercent: monitorMap['MemUsage'] != null ? Number(monitorMap['MemUsage']).toFixed(0) : null,
             memUsedMB: monitorMap['MemUsage'] != null && instances.length > 0
               ? (instances[0].Memory * 1024 * Number(monitorMap['MemUsage']) / 100).toFixed(0)
