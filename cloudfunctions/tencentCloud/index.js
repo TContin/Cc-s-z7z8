@@ -98,6 +98,17 @@ function formatTime(str) {
   }
 }
 
+// 生成腾讯云监控 API 要求的时间格式 (datetime_iso)
+function toTcMonitorTime(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  const h = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  const sec = String(date.getSeconds()).padStart(2, '0')
+  return `${y}-${m}-${d}T${h}:${min}:${sec}+00:00`
+}
+
 exports.main = async (event) => {
   const { secretId, secretKey, action } = event
 
@@ -106,6 +117,64 @@ exports.main = async (event) => {
   }
 
   try {
+    // ========== 调试：直接测试监控 API ==========
+    if (action === 'debugMonitor') {
+      const region = event.region || 'ap-guangzhou'
+      const instanceId = event.instanceId
+
+      if (!instanceId) {
+        // 先查实例列表拿 ID
+        const instRes = await tcApiRequest(secretId, secretKey, 'lighthouse', 'DescribeInstances', '2020-03-24', { Limit: 1 }, region)
+        const inst = instRes.Response && instRes.Response.InstanceSet && instRes.Response.InstanceSet[0]
+        if (!inst) return { success: false, error: '没有找到服务器实例', raw: instRes.Response }
+        return {
+          success: true,
+          message: '请带上 instanceId 再调一次',
+          instanceId: inst.InstanceId,
+          instanceName: inst.InstanceName
+        }
+      }
+
+      const now = new Date()
+      const startTime = toTcMonitorTime(new Date(now.getTime() - 30 * 60 * 1000))
+      const endTime = toTcMonitorTime(now)
+
+      // 测试多个可能的指标名
+      const testMetrics = [
+        'CpuLoadPercent', 'CPUUsage', 'CpuUsage', 'cpu_usage',
+        'MemUsage', 'mem_usage',
+        'lanOuttraffic', 'LanOuttraffic', 'WanOuttraffic'
+      ]
+
+      const results = {}
+      for (const metric of testMetrics) {
+        try {
+          const res = await tcApiRequest(secretId, secretKey, 'monitor', 'GetMonitorData', '2018-07-24', {
+            Namespace: 'QCE/LIGHTHOUSE',
+            MetricName: metric,
+            Period: 300,
+            StartTime: startTime,
+            EndTime: endTime,
+            Instances: [{ Dimensions: [{ Name: 'InstanceId', Value: instanceId }] }]
+          }, region)
+          results[metric] = {
+            error: res.Response && res.Response.Error ? res.Response.Error.Message : null,
+            hasData: res.Response && res.Response.DataPoints && res.Response.DataPoints.length > 0,
+            pointCount: res.Response && res.Response.DataPoints && res.Response.DataPoints[0] ? (res.Response.DataPoints[0].Values || []).length : 0,
+            lastValue: null
+          }
+          if (results[metric].hasData && results[metric].pointCount > 0) {
+            const vals = res.Response.DataPoints[0].Values
+            results[metric].lastValue = vals[vals.length - 1]
+          }
+        } catch (e) {
+          results[metric] = { error: e.message }
+        }
+      }
+
+      return { success: true, instanceId, results }
+    }
+
     // ========== 查询轻量应用服务器 ==========
     if (action === 'getLighthouseInstances') {
       const region = event.region || 'ap-guangzhou'
@@ -254,8 +323,8 @@ exports.main = async (event) => {
       if (instances.length > 0) {
         const instIds = instances.map(i => i.InstanceId)
         const now = new Date()
-        const startTime = new Date(now.getTime() - 10 * 60 * 1000).toISOString()
-        const endTime = now.toISOString()
+        const startTime = toTcMonitorTime(new Date(now.getTime() - 10 * 60 * 1000))
+        const endTime = toTcMonitorTime(now)
 
         // 轻量服务器监控指标（注意和 CVM 不同）
         const metrics = [
