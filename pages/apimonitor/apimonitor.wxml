@@ -3,98 +3,108 @@
   <view class="empty-state" wx:if="{{!configured}}">
     <text class="empty-icon">📡</text>
     <text class="empty-text">尚未配置 API</text>
-    <text class="empty-sub">添加你的 API Key 开始监控</text>
-    <button class="btn-primary setup-btn" bindtap="onConfigTap">配置 API</button>
+    <text class="empty-sub">需要配置 Cookie 和 UserId 才能获取数据</text>
+    <button class="btn-primary setup-btn" bindtap="onConfigTap">去配置</button>
   </view>
 
   <!-- 已配置 -->
   <block wx:else>
-    <!-- 顶部操作栏 -->
     <view class="top-bar">
       <view class="top-left">
         <text class="top-title">API 监控</text>
         <text class="top-time" wx:if="{{lastUpdate}}">{{lastUpdate}} 更新</text>
       </view>
       <view class="top-actions">
-        <text class="action-btn" bindtap="onRefresh">{{refreshing ? '刷新中...' : '刷新'}}</text>
+        <text class="action-btn" bindtap="onRefresh">{{refreshing ? '...' : '刷新'}}</text>
         <text class="action-btn" bindtap="onConfigTap">设置</text>
       </view>
     </view>
 
-    <!-- 加载中 -->
     <view class="loading-state" wx:if="{{loading}}">
       <text class="loading-text">加载中...</text>
     </view>
 
     <block wx:else>
       <!-- 概览卡片 -->
-      <view class="overview-grid">
-        <view class="overview-card">
-          <text class="ov-label">余额</text>
-          <text class="ov-value primary">{{balance}}</text>
-        </view>
-        <view class="overview-card">
-          <text class="ov-label">已使用</text>
-          <text class="ov-value danger">{{usedAmount}}</text>
+      <view class="overview-grid" wx:if="{{summary}}">
+        <view class="overview-card highlight">
+          <text class="ov-label">节省金额</text>
+          <text class="ov-value success">{{summary.savedAmount}}</text>
+          <text class="ov-sub" wx:if="{{summary.savedPercent !== '--'}}">省{{summary.savedPercent}}</text>
         </view>
         <view class="overview-card">
           <text class="ov-label">Token 用量</text>
-          <text class="ov-value">{{tokenUsage}}</text>
+          <text class="ov-value primary">{{summary.totalTokens}}</text>
+          <text class="ov-sub">输入{{summary.inputTokens}} 输出{{summary.outputTokens}}</text>
+        </view>
+        <view class="overview-card">
+          <text class="ov-label">累计时长</text>
+          <text class="ov-value">{{summary.totalHours}} 小时</text>
         </view>
         <view class="overview-card">
           <text class="ov-label">请求次数</text>
-          <text class="ov-value">{{requestCount}}</text>
+          <text class="ov-value">{{summary.totalRequests}}</text>
+        </view>
+        <view class="overview-card">
+          <text class="ov-label">官方价格</text>
+          <text class="ov-value">{{summary.officialPrice}}</text>
+        </view>
+        <view class="overview-card">
+          <text class="ov-label">实际支付</text>
+          <text class="ov-value danger">{{summary.actualCost}}</text>
         </view>
       </view>
 
-      <!-- 密钥列表 -->
+      <!-- 密钥状态 -->
       <view class="section-title" wx:if="{{keys.length > 0}}">密钥状态</view>
       <view class="ios-group" wx:if="{{keys.length > 0}}">
         <view class="key-item" wx:for="{{keys}}" wx:key="name">
-          <view class="key-info">
+          <view class="key-header">
             <view class="key-name">{{item.name}}</view>
-            <view class="key-id">{{item.key}}</view>
+            <view class="key-status {{item.isActive ? 'active' : 'inactive'}}">{{item.status}}</view>
           </view>
+          <view class="key-id">{{item.key}}</view>
           <view class="key-stats">
             <view class="key-stat">
               <text class="ks-value">{{item.calls}}</text>
-              <text class="ks-label">调用</text>
+              <text class="ks-label">调用次数</text>
             </view>
             <view class="key-stat">
               <text class="ks-value">{{item.todayCost}}</text>
-              <text class="ks-label">今日</text>
+              <text class="ks-label">今日消耗</text>
             </view>
             <view class="key-stat">
               <text class="ks-value">{{item.weekCost}}</text>
-              <text class="ks-label">7日</text>
+              <text class="ks-label">近7天</text>
             </view>
-          </view>
-          <view class="key-status {{item.isActive ? 'active' : 'inactive'}}">
-            <text>{{item.status}}</text>
           </view>
         </view>
       </view>
 
       <!-- 使用记录 -->
-      <view class="section-title" wx:if="{{records.length > 0}}">最近使用记录</view>
+      <view class="section-title" wx:if="{{records.length > 0}}">使用记录（近7天）</view>
       <view class="ios-group" wx:if="{{records.length > 0}}">
         <view class="record-item" wx:for="{{records}}" wx:key="index">
-          <view class="rec-left">
-            <view class="rec-model">{{item.model}}</view>
-            <view class="rec-time">{{item.time}}</view>
+          <view class="rec-top">
+            <text class="rec-model">{{item.model}}</text>
+            <text class="rec-cost">{{item.cost}}</text>
           </view>
-          <view class="rec-right">
-            <view class="rec-tokens">{{item.tokens}} tokens</view>
-            <view class="rec-cost">{{item.cost}}</view>
+          <view class="rec-bottom">
+            <text class="rec-meta">{{item.service}} · {{item.keyName}}</text>
+            <text class="rec-tokens">{{item.inputTokens + item.outputTokens}} tokens</text>
+          </view>
+          <view class="rec-time-row">
+            <text class="rec-time">{{item.time}}</text>
+            <text class="rec-duration" wx:if="{{item.duration !== '--'}}">{{item.duration}}</text>
           </view>
         </view>
       </view>
 
-      <!-- 无数据提示 -->
-      <view class="no-data" wx:if="{{keys.length === 0 && records.length === 0 && balance === '--'}}">
+      <!-- 无数据 -->
+      <view class="no-data" wx:if="{{!summary && keys.length === 0 && records.length === 0}}">
         <text class="no-data-icon">📊</text>
         <text class="no-data-text">暂无法获取数据</text>
-        <text class="no-data-sub">请检查 API Key 是否正确，或平台是否支持查询接口</text>
+        <text class="no-data-sub">请检查 Cookie 和 UserId 是否正确</text>
       </view>
     </block>
   </block>

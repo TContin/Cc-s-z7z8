@@ -2,24 +2,18 @@ const { getData, saveData, showToast, showConfirm } = require('../../../utils/ut
 
 Page({
   data: {
-    baseUrl: 'https://api.aicodewith.com',
-    apiKey: '',
+    userId: '',
+    cookie: '',
     name: 'AI Code With',
-    isEdit: false,
-    presets: [
-      { name: 'AI Code With', url: 'https://api.aicodewith.com' },
-      { name: 'AI Code With (国内)', url: 'https://api.with7.cn' },
-      { name: 'OpenAI', url: 'https://api.openai.com' },
-      { name: '自定义', url: '' }
-    ]
+    isEdit: false
   },
 
   onLoad() {
     const config = getData('apiConfig', null)
     if (config) {
       this.setData({
-        baseUrl: config.baseUrl || 'https://api.aicodewith.com',
-        apiKey: config.apiKey || '',
+        userId: config.userId || '',
+        cookie: config.cookie || '',
         name: config.name || 'AI Code With',
         isEdit: true
       })
@@ -31,54 +25,23 @@ Page({
     this.setData({ [field]: e.detail.value })
   },
 
-  onPresetTap(e) {
-    const preset = e.currentTarget.dataset.preset
-    this.setData({
-      name: preset.name,
-      baseUrl: preset.url
-    })
-  },
+  onSave() {
+    const { userId, cookie, name } = this.data
 
-  async onSave() {
-    const { baseUrl, apiKey, name } = this.data
-
-    if (!apiKey.trim()) {
-      showToast('请输入 API Key')
+    if (!userId.trim()) {
+      showToast('请输入 UserId')
+      return
+    }
+    if (!cookie.trim()) {
+      showToast('请输入 Cookie')
       return
     }
 
     const config = {
-      baseUrl: baseUrl.trim().replace(/\/$/, '') || 'https://api.aicodewith.com',
-      apiKey: apiKey.trim(),
-      name: name.trim() || 'API',
+      userId: userId.trim(),
+      cookie: cookie.trim(),
+      name: name.trim() || 'AI Code With',
       updatedAt: new Date().toISOString()
-    }
-
-    // 测试连通性
-    wx.showLoading({ title: '测试连接...' })
-    try {
-      const testResult = await new Promise((resolve, reject) => {
-        wx.request({
-          url: config.baseUrl + '/v1/models',
-          method: 'GET',
-          header: { 'Authorization': `Bearer ${config.apiKey}` },
-          success: resolve,
-          fail: reject,
-          timeout: 8000
-        })
-      })
-
-      wx.hideLoading()
-
-      if (testResult.statusCode === 401) {
-        showToast('API Key 无效')
-        return
-      }
-
-      // 即使其他错误也保存（可能该端点不支持但余额查询支持）
-    } catch (e) {
-      wx.hideLoading()
-      // 网络错误也允许保存
     }
 
     saveData('apiConfig', config)
