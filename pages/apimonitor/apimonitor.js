@@ -33,6 +33,8 @@ Page({
 
   async fetchAll() {
     this.setData({ loading: true })
+    // 先检查 Token 是否即将过期，提前刷新
+    await this.checkAndRefreshToken()
     await Promise.all([
       this.fetchSummary(),
       this.fetchKeys(),
@@ -42,6 +44,123 @@ Page({
       loading: false,
       refreshing: false,
       lastUpdate: formatDate(new Date(), 'HH:mm')
+    })
+  },
+
+  // ========== Token 过期检测 & 提前刷新 ==========
+  async checkAndRefreshToken() {
+    const { apiConfig } = this.data
+    if (!apiConfig || !apiConfig.cookie) return
+
+    try {
+      // 从 Cookie 中解析 access_token 的过期时间
+      const expiresAt = this.getTokenExpiresAt(apiConfig.cookie)
+      if (!expiresAt) return
+
+      const now = Math.floor(Date.now() / 1000)
+      const remaining = expiresAt - now
+
+      // 还剩 5 分钟以内，提前刷新
+      if (remaining < 300) {
+        console.log(`Token 即将过期（剩余 ${remaining}s），主动刷新...`)
+        const res = await this.callRefreshToken(apiConfig.cookie)
+        if (res && res.cookie) {
+          await this.updateCookieEverywhere(res.cookie)
+          console.log('Token 提前刷新成功')
+        } else {
+          console.warn('Token 提前刷新失败，继续使用旧 Token')
+        }
+      }
+    } catch (err) {
+      console.error('Token 过期检测失败:', err)
+    }
+  },
+
+  // 从 Cookie 中解析 Supabase auth token 的 expires_at
+  getTokenExpiresAt(cookie) {
+    try {
+      const parts = []
+      const regex = /sb-[^-]+-auth-token\.(\d+)=([^;]+)/g
+      let match
+      while ((match = regex.exec(cookie)) !== null) {
+        parts.push({ index: parseInt(match[1]), value: match[2] })
+      }
+      parts.sort((a, b) => a.index - b.index)
+      if (parts.length === 0) return null
+
+      let tokenStr = parts.map(p => p.value).join('')
+      if (tokenStr.startsWith('base64-')) {
+        tokenStr = tokenStr.substring(7)
+      }
+
+      // Base64 解码 — 小程序环境用 base64ToArrayBuffer
+      const buffer = wx.base64ToArrayBuffer(tokenStr)
+      const arr = new Uint8Array(buffer)
+      let decoded = ''
+      for (let i = 0; i < arr.length; i++) {
+        decoded += String.fromCharCode(arr[i])
+      }
+      const authData = JSON.parse(decoded)
+      return authData.expires_at || null
+    } catch (e) {
+      return null
+    }
+  },
+
+  // 调用云函数主动刷新 Token
+  callRefreshToken(cookie) {
+    return new Promise((resolve) => {
+      wx.cloud.callFunction({
+        name: 'apiProxy',
+        data: { action: 'refreshToken', cookie },
+        success: (res) => {
+          if (res.result && res.result.success) {
+            resolve(res.result)
+          } else {
+            resolve(null)
+          }
+        },
+        fail: () => resolve(null)
+      })
+    })
+  },
+
+  // 更新 Cookie 到本地 + 页面数据 + 云端
+  async updateCookieEverywhere(newCookie) {
+    const config = getData('apiConfig', {})
+    config.cookie = newCookie
+    config.updatedAt = new Date().toISOString()
+    saveData('apiConfig', config)
+    this.setData({ apiConfig: config })
+
+    // 同步到云端，让其他设备也能用新 Token
+    this.syncConfigToCloud(config)
+  },
+
+  // 将配置同步到云端
+  syncConfigToCloud(config) {
+    wx.cloud.callFunction({
+      name: 'getOpenId',
+      success: (idRes) => {
+        const openid = idRes.result && idRes.result.openid
+        if (!openid) return
+
+        const db = wx.cloud.database()
+        db.collection('user_data')
+          .where({ _openid: openid })
+          .limit(1)
+          .get()
+          .then(({ data: existing }) => {
+            const updateData = { apiConfig: config }
+            if (existing.length > 0) {
+              db.collection('user_data').doc(existing[0]._id).update({ data: updateData })
+            } else {
+              db.collection('user_data').add({ data: updateData })
+            }
+            console.log('Token 已同步到云端')
+          })
+          .catch(err => console.error('云端同步失败:', err))
+      }
     })
   },
 
@@ -197,18 +316,14 @@ Page({
         name: 'apiProxy',
         data: { path, cookie: apiConfig.cookie },
         success: (res) => {
-          // 如果云函数返回了新 Cookie（token 被自动刷新了），更新本地存储
-          if (res.result.newCookie) {
-            const config = getData('apiConfig', {})
-            config.cookie = res.result.newCookie
-            config.updatedAt = new Date().toISOString()
-            saveData('apiConfig', config)
-            this.setData({ apiConfig: config })
-            console.log('Token 已自动刷新')
+          // 如果云函数返回了新 Cookie（token 被自动刷新了），更新本地 + 云端
+          if (res.result && res.result.newCookie) {
+            this.updateCookieEverywhere(res.result.newCookie)
+            console.log('Token 已自动刷新并同步云端')
           }
           resolve({
-            statusCode: res.result.statusCode || 200,
-            data: res.result.data
+            statusCode: (res.result && res.result.statusCode) || 200,
+            data: res.result && res.result.data
           })
         },
         fail: reject
