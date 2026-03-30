@@ -1,0 +1,9 @@
+{
+  "name": "apiProxy",
+  "version": "1.0.0",
+  "description": "API代理转发，解决小程序Cookie限制",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

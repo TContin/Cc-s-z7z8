@@ -157,20 +157,24 @@ Page({
 
   request(path) {
     const { apiConfig } = this.data
-    const url = 'https://aicodewith.com' + path
 
     return new Promise((resolve, reject) => {
-      wx.request({
-        url,
-        method: 'GET',
-        header: {
-          'Cookie': apiConfig.cookie,
-          'Content-Type': 'application/json',
-          'Accept': '*/*',
-          'Referer': 'https://aicodewith.com/zh/dashboard/usage-records'
+      wx.cloud.callFunction({
+        name: 'apiProxy',
+        data: {
+          path,
+          cookie: apiConfig.cookie
         },
-        success: resolve,
-        fail: reject
+        success: (res) => {
+          resolve({
+            statusCode: res.result.statusCode || 200,
+            data: res.result.data
+          })
+        },
+        fail: (err) => {
+          console.error('云函数调用失败:', err)
+          reject(err)
+        }
       })
     })
   },
