@@ -34,6 +34,15 @@ const modules = [
     color: '#FF9500',
     bgColor: '#FFF8E1',
     page: '/pages/notes/notes'
+  },
+  {
+    id: 'cloudmonitor',
+    name: '云服务监控',
+    icon: '☁️',
+    desc: '腾讯云服务器·域名·证书·余额',
+    color: '#5856D6',
+    bgColor: '#EFEDFF',
+    page: '/pages/cloudmonitor/cloudmonitor'
   }
   // 后续扩展：在此添加新模块
 ]

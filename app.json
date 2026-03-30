@@ -13,6 +13,8 @@
     "pages/profile/login/login",
     "pages/apimonitor/apimonitor",
     "pages/apimonitor/config/config",
+    "pages/cloudmonitor/cloudmonitor",
+    "pages/cloudmonitor/config/config",
     "pages/notes/notes",
     "pages/notes/edit/edit"
   ],
