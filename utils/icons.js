@@ -18,7 +18,7 @@ const passwordIcons = {
   '网易云音乐': { letter: '♪', bg: '#C20C0C' },
   'QQ音乐':   { letter: '♫', bg: '#31C27C' },
   'Spotify':  { letter: 'S',  bg: '#1DB954' },
-  'Apple':    { letter: '',  bg: '#000000' },
+  'Apple':    { letter: 'A',  bg: '#000000' },
   '腾讯视频': { letter: 'V',  bg: '#FF7701' },
   '爱奇艺':   { letter: 'iQ', bg: '#00BE06' },
   'B站':      { letter: 'B',  bg: '#FB7299' },
