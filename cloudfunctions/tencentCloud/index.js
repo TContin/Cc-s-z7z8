@@ -335,8 +335,7 @@ exports.main = async (event) => {
           'lanOuttraffic',    // 外网出带宽 (Mbps)
           'lanIntraffic',     // 外网入带宽 (Mbps)
           'DiskUsage',        // 磁盘使用率 (%)
-          'DiskReadTraffic',  // 磁盘读流量 (KB/s)
-          'DiskWriteTraffic'  // 磁盘写流量 (KB/s)
+          'TcpCurrEstab'      // TCP 连接数
         ]
 
         const parallelTasks = [
@@ -443,8 +442,7 @@ exports.main = async (event) => {
             bandwidthInMbps: monitorMap['lanIntraffic'] != null ? Number(monitorMap['lanIntraffic']).toFixed(3) : null,
             bandwidthOutMbps: monitorMap['lanOuttraffic'] != null ? Number(monitorMap['lanOuttraffic']).toFixed(3) : null,
             diskUsage: monitorMap['DiskUsage'] != null ? Number(monitorMap['DiskUsage']).toFixed(1) : null,
-            diskReadKBs: monitorMap['DiskReadTraffic'] != null ? Number(monitorMap['DiskReadTraffic']).toFixed(3) : null,
-            diskWriteKBs: monitorMap['DiskWriteTraffic'] != null ? Number(monitorMap['DiskWriteTraffic']).toFixed(3) : null
+            tcpConnections: monitorMap['TcpCurrEstab'] != null ? Math.round(Number(monitorMap['TcpCurrEstab'])) : null
           },
           domains: domains.map(d => ({
             name: d.DomainName,

@@ -113,17 +113,11 @@
               </view>
             </view>
 
-            <!-- 系统盘 IO -->
+            <!-- TCP 连接 -->
             <view class="metric-cell">
-              <text class="metric-label">系统盘 IO</text>
-              <view class="bw-row">
-                <text class="bw-dir">读</text>
-                <text class="bw-val">{{monitor.diskReadKBs || '0'}} KB/s</text>
-              </view>
-              <view class="bw-row">
-                <text class="bw-dir">写</text>
-                <text class="bw-val">{{monitor.diskWriteKBs || '0'}} KB/s</text>
-              </view>
+              <text class="metric-label">TCP 连接</text>
+              <text class="metric-big">{{monitor.tcpConnections != null ? monitor.tcpConnections : '--'}}</text>
+              <text class="metric-sub">当前活跃连接数</text>
             </view>
           </view>
 
