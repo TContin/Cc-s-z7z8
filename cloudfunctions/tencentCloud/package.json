@@ -1,0 +1,9 @@
+{
+  "name": "tencentCloud",
+  "version": "1.0.0",
+  "description": "腾讯云API代理 - 轻量服务器/域名/账单查询",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

@@ -1,0 +1,122 @@
+.page-notes {
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
+}
+
+/* 文件夹筛选 */
+.folder-scroll {
+  white-space: nowrap;
+  margin-bottom: 16rpx;
+}
+
+.folder-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.folder-list {
+  display: inline-flex;
+  gap: 12rpx;
+  padding: 4rpx 0;
+}
+
+.folder-tag {
+  display: inline-block;
+  padding: 10rpx 24rpx;
+  border-radius: 32rpx;
+  font-size: 24rpx;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.folder-tag.active {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 500;
+}
+
+/* 数量提示 */
+.notes-count {
+  font-size: 22rpx;
+  color: var(--text-hint);
+  padding: 0 4rpx 12rpx;
+}
+
+/* 备忘录列表 */
+.notes-list {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.note-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 28rpx;
+  position: relative;
+}
+
+.note-item::after {
+  content: '';
+  position: absolute;
+  left: 28rpx;
+  right: 0;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--separator);
+}
+
+.note-item:last-child::after {
+  display: none;
+}
+
+.note-pin {
+  font-size: 24rpx;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.note-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.note-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4rpx;
+}
+
+.note-meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  overflow: hidden;
+}
+
+.note-time {
+  font-size: 24rpx;
+  color: var(--text-hint);
+  flex-shrink: 0;
+}
+
+.note-preview {
+  font-size: 24rpx;
+  color: var(--text-hint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-arrow {
+  font-size: 32rpx;
+  color: rgba(60, 60, 67, 0.3);
+  flex-shrink: 0;
+  margin-left: 8rpx;
+}

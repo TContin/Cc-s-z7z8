@@ -1,0 +1,49 @@
+<view class="page-config">
+  <view class="form-card">
+    <view class="form-row">
+      <view class="form-row-label">SecretId</view>
+      <input class="form-row-input mono" placeholder="腾讯云 API 密钥 ID" value="{{secretId}}" data-field="secretId" bindinput="onInput" />
+    </view>
+    <view class="form-row">
+      <view class="form-row-label">SecretKey</view>
+      <input class="form-row-input mono" placeholder="腾讯云 API 密钥 Key" value="{{secretKey}}" data-field="secretKey" bindinput="onInput" password="{{true}}" />
+    </view>
+    <view class="form-row">
+      <view class="form-row-label">默认地域</view>
+      <picker mode="selector" range="{{regions}}" range-key="label" value="{{regionIndex}}" bindchange="onRegionChange">
+        <view class="picker-value">{{regions[regionIndex].label}} <text class="picker-arrow">▸</text></view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 测试状态 -->
+  <view class="test-status test-{{testStatus}}" wx:if="{{testStatusText}}">
+    <text>{{testStatus === 'success' ? '✅' : testStatus === 'fail' ? '❌' : '⏳'}} {{testStatusText}}</text>
+  </view>
+
+  <view class="tip-card">
+    <text class="tip-title">如何获取 API 密钥？</text>
+    <text class="tip-text">1. 登录腾讯云控制台</text>
+    <text class="tip-text">2. 进入「访问管理 → API 密钥管理」</text>
+    <text class="tip-text">3. 创建子用户密钥（推荐）或使用主账号密钥</text>
+    <text class="tip-text">4. 复制 SecretId 和 SecretKey</text>
+    <text class="tip-text tip-info">💡 建议创建子用户并仅授权只读权限</text>
+    <text class="tip-text tip-warn">⚠️ SecretKey 加密存储在本地，不会上传到云端</text>
+  </view>
+
+  <view class="tip-card">
+    <text class="tip-title">需要哪些权限？</text>
+    <text class="tip-text">• lighthouse:DescribeInstances（轻量服务器）</text>
+    <text class="tip-text">• lighthouse:DescribeInstancesTrafficPackages（流量包）</text>
+    <text class="tip-text">• domain:DescribeDomainNameList（域名列表）</text>
+    <text class="tip-text">• ssl:DescribeCertificates（SSL证书）</text>
+    <text class="tip-text">• billing:DescribeAccountBalance（账户余额）</text>
+    <text class="tip-text tip-info">💡 可使用 QcloudFinanceFullAccess + QcloudLighthouseReadOnlyAccess + QcloudSSLReadOnlyAccess 策略</text>
+  </view>
+
+  <button class="btn-secondary" bindtap="onTestConnection" loading="{{testing}}">
+    {{testing ? '测试中...' : '测试连接'}}
+  </button>
+  <button class="btn-primary save-btn" bindtap="onSave">{{isEdit ? '保存修改' : '保存配置'}}</button>
+  <button class="btn-danger del-btn" wx:if="{{isEdit}}" bindtap="onDelete">删除配置</button>
+</view>

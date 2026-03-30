@@ -1,0 +1,64 @@
+<view class="page-notes">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <text class="search-icon">🔍</text>
+    <input 
+      class="search-input" 
+      placeholder="搜索" 
+      placeholder-style="color: #8E8E93"
+      value="{{searchKey}}"
+      bindinput="onSearchInput"
+    />
+  </view>
+
+  <!-- 文件夹筛选 -->
+  <scroll-view scroll-x class="folder-scroll" enhanced show-scrollbar="{{false}}" wx:if="{{folders.length > 1}}">
+    <view class="folder-list">
+      <view 
+        class="folder-tag {{currentFolder === item ? 'active' : ''}}"
+        wx:for="{{folders}}"
+        wx:key="*this"
+        data-name="{{item}}"
+        bindtap="onFolderTap"
+      >{{item}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 备忘录数量 -->
+  <view class="notes-count" wx:if="{{!isEmpty}}">
+    <text>{{filteredList.length}} 个备忘录</text>
+  </view>
+
+  <!-- 列表 -->
+  <view class="notes-list" wx:if="{{!isEmpty}}">
+    <view 
+      class="note-item"
+      wx:for="{{filteredList}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="onItemTap"
+      bindlongpress="onItemLongpress"
+    >
+      <view class="note-pin" wx:if="{{item.pinned}}">📌</view>
+      <view class="note-body">
+        <view class="note-title">{{item.titleDisplay}}</view>
+        <view class="note-meta">
+          <text class="note-time">{{item.timeDisplay}}</text>
+          <text class="note-preview">{{item.preview}}</text>
+        </view>
+      </view>
+      <text class="note-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{isEmpty}}">
+    <text class="empty-icon">📝</text>
+    <text class="empty-text">{{searchKey ? '没有找到匹配的备忘录' : '暂无备忘录'}}</text>
+    <text class="empty-sub" wx:if="{{!searchKey}}">点击 + 开始记录</text>
+  </view>
+
+  <view class="fab" bindtap="onAddTap">
+    <text class="fab-icon">+</text>
+  </view>
+</view>

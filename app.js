@@ -21,6 +21,9 @@ App({
     if (!wx.getStorageSync('subscriptions')) {
       wx.setStorageSync('subscriptions', [])
     }
+    if (!wx.getStorageSync('notes')) {
+      wx.setStorageSync('notes', [])
+    }
     if (!wx.getStorageSync('settings')) {
       wx.setStorageSync('settings', {
         passwordProtect: false,

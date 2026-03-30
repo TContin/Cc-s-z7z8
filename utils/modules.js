@@ -25,6 +25,15 @@ const modules = [
     color: '#FF9500',
     bgColor: '#FFF3E0',
     page: '/pages/apimonitor/apimonitor'
+  },
+  {
+    id: 'notes',
+    name: '备忘录',
+    icon: '📝',
+    desc: '随时记录灵感和想法',
+    color: '#FF9500',
+    bgColor: '#FFF8E1',
+    page: '/pages/notes/notes'
   }
   // 后续扩展：在此添加新模块
 ]

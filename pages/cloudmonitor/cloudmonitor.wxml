@@ -1,0 +1,133 @@
+<view class="page-cloud">
+  <!-- 未配置 -->
+  <view class="empty-state" wx:if="{{!configured}}">
+    <text class="empty-icon">☁️</text>
+    <text class="empty-text">尚未配置腾讯云</text>
+    <text class="empty-sub">需要配置 SecretId 和 SecretKey</text>
+    <button class="btn-primary setup-btn" bindtap="onConfigTap">去配置</button>
+  </view>
+
+  <block wx:else>
+    <view class="top-bar">
+      <view class="top-left">
+        <text class="top-title">云服务监控</text>
+        <text class="top-time" wx:if="{{lastUpdate}}">{{lastUpdate}} 更新</text>
+      </view>
+      <view class="top-actions">
+        <text class="action-btn" bindtap="onRefresh">{{refreshing ? '...' : '刷新'}}</text>
+        <text class="action-btn" bindtap="onConfigTap">设置</text>
+      </view>
+    </view>
+
+    <view class="loading-state" wx:if="{{loading}}">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <block wx:else>
+      <!-- ===== 账户余额 ===== -->
+      <view class="balance-card" wx:if="{{balance}}">
+        <view class="bal-top">
+          <text class="bal-label">账户余额</text>
+          <text class="bal-amount {{balance.total < 10 ? 'danger' : ''}}">¥{{balance.total}}</text>
+        </view>
+        <view class="bal-detail">
+          <view class="bal-item">
+            <text class="bal-item-val">¥{{balance.cash}}</text>
+            <text class="bal-item-label">现金</text>
+          </view>
+          <view class="bal-item">
+            <text class="bal-item-val">¥{{balance.gift}}</text>
+            <text class="bal-item-label">赠送</text>
+          </view>
+          <view class="bal-item">
+            <text class="bal-item-val">¥{{balance.frozen}}</text>
+            <text class="bal-item-label">冻结</text>
+          </view>
+          <view class="bal-item" wx:if="{{balance.owe !== '0.00'}}">
+            <text class="bal-item-val danger">¥{{balance.owe}}</text>
+            <text class="bal-item-label">欠费</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- ===== 轻量服务器 ===== -->
+      <view class="section-title" wx:if="{{instances.length > 0}}">轻量应用服务器</view>
+      <view class="ios-group" wx:if="{{instances.length > 0}}">
+        <view class="inst-item" wx:for="{{instances}}" wx:key="id">
+          <view class="inst-header">
+            <view class="inst-name-row">
+              <text class="inst-name">{{item.name || item.id}}</text>
+              <text class="tag {{item.status === 'RUNNING' ? 'tag-success' : item.status === 'STOPPED' ? 'tag-danger' : 'tag-warning'}}">
+                {{item.status === 'RUNNING' ? '运行中' : item.status === 'STOPPED' ? '已关机' : item.status}}
+              </text>
+            </view>
+            <text class="inst-ip">{{item.publicIp}}</text>
+          </view>
+
+          <view class="inst-specs">
+            <text class="spec">{{item.cpu}}核</text>
+            <text class="spec-sep">·</text>
+            <text class="spec">{{item.memory}}GB</text>
+            <text class="spec-sep">·</text>
+            <text class="spec">{{item.disk}}GB</text>
+            <text class="spec-sep">·</text>
+            <text class="spec">{{item.bandwidth}}Mbps</text>
+          </view>
+
+          <!-- 流量使用 -->
+          <view class="traffic-row" wx:if="{{item.trafficTotalGB > 0}}">
+            <view class="traffic-bar-bg">
+              <view class="traffic-bar-fill {{item.trafficPercent > 80 ? 'danger' : item.trafficPercent > 60 ? 'warning' : ''}}" style="width: {{item.trafficPercent}}%"></view>
+            </view>
+            <text class="traffic-text">{{item.trafficUsedGB}} / {{item.trafficTotalGB}} GB ({{item.trafficPercent}}%)</text>
+          </view>
+
+          <view class="inst-footer">
+            <text class="inst-os">{{item.os}}</text>
+            <text class="inst-expire">到期 {{item.expiredTime}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- ===== 域名 ===== -->
+      <view class="section-title" wx:if="{{domains.length > 0}}">域名（{{domains.length}}个）</view>
+      <view class="ios-group" wx:if="{{domains.length > 0}}">
+        <view class="domain-item" wx:for="{{domains}}" wx:key="name">
+          <view class="domain-left">
+            <text class="domain-name">{{item.name}}</text>
+            <text class="domain-expire">到期 {{item.expiredDate || '--'}}</text>
+          </view>
+          <text class="tag tag-{{item.statusType}}">{{item.statusText}}</text>
+        </view>
+      </view>
+
+      <!-- ===== SSL 证书 ===== -->
+      <view class="section-title" wx:if="{{certificates.length > 0}}">SSL 证书（{{certificates.length}}个）</view>
+      <view class="ios-group" wx:if="{{certificates.length > 0}}">
+        <view class="cert-item" wx:for="{{certificates}}" wx:key="id">
+          <view class="cert-left">
+            <text class="cert-domain">{{item.domain}}</text>
+            <text class="cert-product">{{item.productName || '免费证书'}}</text>
+          </view>
+          <text class="tag tag-{{item.statusType}}">{{item.statusText}}</text>
+        </view>
+      </view>
+
+      <!-- ===== 错误提示 ===== -->
+      <view class="error-card" wx:if="{{errors && (errors.instances || errors.domains || errors.certificates || errors.balance)}}">
+        <text class="error-title">部分数据获取失败</text>
+        <text class="error-text" wx:if="{{errors.instances}}">服务器: {{errors.instances}}</text>
+        <text class="error-text" wx:if="{{errors.domains}}">域名: {{errors.domains}}</text>
+        <text class="error-text" wx:if="{{errors.certificates}}">证书: {{errors.certificates}}</text>
+        <text class="error-text" wx:if="{{errors.balance}}">余额: {{errors.balance}}</text>
+        <text class="error-hint">请检查 API 密钥权限是否包含对应产品</text>
+      </view>
+
+      <view class="no-data" wx:if="{{!balance && instances.length === 0 && domains.length === 0 && certificates.length === 0}}">
+        <text class="no-data-icon">☁️</text>
+        <text class="no-data-text">暂无数据</text>
+        <text class="no-data-sub">请检查 API 密钥配置和权限</text>
+      </view>
+    </block>
+  </block>
+</view>

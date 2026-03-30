@@ -1,0 +1,68 @@
+<view class="page-edit">
+  <!-- 时间信息 -->
+  <view class="edit-time" wx:if="{{timeDisplay}}">{{timeDisplay}}</view>
+
+  <!-- 标题输入 -->
+  <input
+    class="edit-title"
+    placeholder="标题"
+    placeholder-style="color: #C7C7CC; font-weight: 700;"
+    value="{{title}}"
+    bindinput="onTitleInput"
+    maxlength="100"
+    focus="{{!isEdit}}"
+  />
+
+  <!-- 正文输入 -->
+  <textarea
+    class="edit-content"
+    placeholder="开始输入..."
+    placeholder-style="color: #C7C7CC;"
+    value="{{content}}"
+    bindinput="onContentInput"
+    auto-height
+    maxlength="-1"
+    show-confirm-bar="{{false}}"
+  />
+
+  <!-- 底部工具栏 -->
+  <view class="toolbar">
+    <view class="toolbar-left">
+      <view class="tool-btn" bindtap="onInsertChecklist">
+        <text>☑️</text>
+      </view>
+      <view class="tool-btn {{pinned ? 'active' : ''}}" bindtap="onTogglePin">
+        <text>📌</text>
+      </view>
+      <view class="tool-btn" bindtap="toggleFolderPicker">
+        <text>📁</text>
+      </view>
+      <view class="tool-btn" bindtap="onShareTap">
+        <text>📋</text>
+      </view>
+    </view>
+    <view class="toolbar-right">
+      <text class="word-count">{{wordCount}} 字</text>
+      <view class="tool-btn danger" bindtap="onDelete" wx:if="{{isEdit}}">
+        <text>🗑️</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 文件夹选择 -->
+  <view class="folder-panel" wx:if="{{showFolderPicker}}">
+    <view class="folder-panel-header">
+      <text class="folder-panel-title">选择文件夹</text>
+      <text class="folder-panel-close" bindtap="toggleFolderPicker">完成</text>
+    </view>
+    <view class="folder-input-row">
+      <input class="folder-input" placeholder="输入新文件夹名称" value="{{folder}}" bindinput="onFolderInput" />
+    </view>
+    <view class="folder-option {{folder === '' ? 'active' : ''}}" data-name="" bindtap="onFolderSelect">
+      <text>无文件夹</text>
+    </view>
+    <view class="folder-option {{folder === item ? 'active' : ''}}" wx:for="{{folders}}" wx:key="*this" data-name="{{item}}" bindtap="onFolderSelect">
+      <text>📁 {{item}}</text>
+    </view>
+  </view>
+</view>
