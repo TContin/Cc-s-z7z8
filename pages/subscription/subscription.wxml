@@ -31,7 +31,7 @@
       bindtap="onItemTap"
       bindlongpress="onItemLongpress"
     >
-      <view class="brand-icon brand-icon-md" style="background:{{item.brandLogo ? 'transparent' : item.brandBg}}">
+      <view class="brand-icon brand-icon-md" style="background:{{item.brandBg}}">
         <image wx:if="{{item.brandLogo}}" class="brand-logo" src="{{item.brandLogo}}" mode="aspectFit" />
         <text wx:else>{{item.brandLetter}}</text>
       </view>
