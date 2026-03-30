@@ -9,7 +9,8 @@
     "pages/subscription/detail/detail",
     "pages/profile/profile",
     "pages/profile/security/security",
-    "pages/profile/about/about"
+    "pages/profile/about/about",
+    "pages/profile/login/login"
   ],
   "window": {
     "navigationBarBackgroundColor": "#F2F2F7",

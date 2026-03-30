@@ -1,0 +1,39 @@
+<view class="page-login">
+  <view class="login-header">
+    <text class="login-title">微信登录</text>
+    <text class="login-desc">使用微信头像和昵称</text>
+  </view>
+
+  <view class="form-card">
+    <!-- 头像选择 - 点击自动弹出微信头像 -->
+    <view class="avatar-section">
+      <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+        <image class="avatar-preview" wx:if="{{avatarUrl}}" src="{{avatarUrl}}" mode="aspectFill" />
+        <view class="avatar-empty" wx:else>
+          <text class="avatar-icon">📷</text>
+          <text class="avatar-text">选择微信头像</text>
+        </view>
+      </button>
+    </view>
+
+    <!-- 昵称 - 自动填充微信昵称 -->
+    <view class="nickname-section">
+      <text class="nick-label">昵称</text>
+      <input 
+        type="nickname" 
+        class="nickname-input" 
+        placeholder="点击获取微信昵称"
+        value="{{nickName}}"
+        bindchange="onNicknameChange"
+        bindinput="onNicknameInput"
+      />
+    </view>
+  </view>
+
+  <view class="login-tip">
+    <text>点击头像区域和昵称输入框</text>
+    <text>系统会自动弹出你的微信头像和昵称</text>
+  </view>
+
+  <button class="btn-primary confirm-btn" bindtap="onConfirm">确认登录</button>
+</view>

@@ -1,32 +1,44 @@
 App({
   onLaunch() {
-    // 初始化本地存储结构
     this.initStorage()
+    this.initCloud()
+  },
+
+  // 初始化云开发
+  initCloud() {
+    if (wx.cloud) {
+      wx.cloud.init({
+        env: 'cloud1-9gxt8t0lb8565367',
+        traceUser: true
+      })
+    }
   },
 
   initStorage() {
-    // 密码本数据
     if (!wx.getStorageSync('passwords')) {
       wx.setStorageSync('passwords', [])
     }
-    // 订阅管理数据
     if (!wx.getStorageSync('subscriptions')) {
       wx.setStorageSync('subscriptions', [])
     }
-    // 应用设置
     if (!wx.getStorageSync('settings')) {
       wx.setStorageSync('settings', {
         passwordProtect: false,
         password: '',
         autoLock: true,
-        lockTimeout: 5 // 分钟
+        lockTimeout: 5,
+        cloudSync: false
       })
+    }
+    if (!wx.getStorageSync('userInfo')) {
+      wx.setStorageSync('userInfo', null)
     }
   },
 
   globalData: {
-    isUnlocked: false, // 密码本解锁状态
+    isUnlocked: false,
     themeColor: '#007AFF',
-    version: '1.0.0'
+    version: '1.1.0',
+    userInfo: null
   }
 })
