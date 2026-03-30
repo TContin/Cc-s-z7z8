@@ -1,4 +1,5 @@
 const { generateId, showToast, getData, saveData, formatDate } = require('../../../utils/util')
+const { getIconByName, iconList } = require('../../../utils/icons')
 
 Page({
   data: {

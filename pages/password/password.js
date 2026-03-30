@@ -1,5 +1,6 @@
 const { getData, showConfirm, showToast } = require('../../utils/util')
 const { decrypt } = require('../../utils/crypto')
+const { getIconByName } = require('../../utils/icons')
 
 Page({
   data: {
@@ -55,11 +56,17 @@ Page({
   loadData() {
     const list = getData('passwords', [])
     // 解密显示名称（密码字段保持加密）
-    const displayList = list.map(item => ({
-      ...item,
-      displayName: item.platform || '未命名',
-      displayAccount: item.account || ''
-    }))
+    const displayList = list.map(item => {
+      const icon = item.iconLetter ? { letter: item.iconLetter, bg: item.iconBg, textColor: item.iconTextColor } : getIconByName(item.platform)
+      return {
+        ...item,
+        displayName: item.platform || '未命名',
+        displayAccount: item.account || '',
+        brandLetter: icon.letter,
+        brandBg: icon.bg,
+        brandTextColor: icon.textColor || '#fff'
+      }
+    })
     
     this.setData({
       list: displayList,

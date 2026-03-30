@@ -1,5 +1,6 @@
 const { generateId, showToast, getData, saveData } = require('../../../utils/util')
 const { encrypt } = require('../../../utils/crypto')
+const { getIconByName, iconList } = require('../../../utils/icons')
 
 Page({
   data: {
@@ -11,51 +12,30 @@ Page({
     website: '',
     remark: '',
     category: '其他',
-    icon: '🔑',
-    color: '#E3F0FF',
+    iconLetter: '?',
+    iconBg: '#007AFF',
+    iconTextColor: '#fff',
     categories: ['社交', '购物', '金融', '工作', '游戏', '其他'],
     categoryIndex: 5,
-    // 常用APP快捷模板
-    templates: [
-      { name: '微信', icon: '💬', color: '#E8F5E9', category: '社交' },
-      { name: 'QQ', icon: '🐧', color: '#E3F2FD', category: '社交' },
-      { name: '微博', icon: '📣', color: '#FFF3E0', category: '社交' },
-      { name: '小红书', icon: '📕', color: '#FFEBEE', category: '社交' },
-      { name: '抖音', icon: '🎵', color: '#1C1C1E', category: '社交' },
-      { name: 'GitHub', icon: '🐱', color: '#F5F5F5', category: '工作' },
-      { name: '淘宝', icon: '🛒', color: '#FFF3E0', category: '购物' },
-      { name: '京东', icon: '🐶', color: '#FFEBEE', category: '购物' },
-      { name: '拼多多', icon: '🔥', color: '#FFEBEE', category: '购物' },
-      { name: '支付宝', icon: '💰', color: '#E3F2FD', category: '金融' },
-      { name: '网易云音乐', icon: '🎶', color: '#FFEBEE', category: '其他' },
-      { name: 'QQ音乐', icon: '🎧', color: '#E8F5E9', category: '其他' },
-      { name: 'Spotify', icon: '💚', color: '#E8F5E9', category: '其他' },
-      { name: 'Apple', icon: '🍎', color: '#F5F5F5', category: '其他' },
-      { name: '腾讯视频', icon: '📺', color: '#E3F2FD', category: '其他' },
-      { name: '爱奇艺', icon: '🎬', color: '#E8F5E9', category: '其他' },
-      { name: 'B站', icon: '📱', color: '#FCE4EC', category: '其他' },
-      { name: 'Netflix', icon: '🎞️', color: '#FFEBEE', category: '其他' },
-      { name: 'Steam', icon: '🎮', color: '#E8EAF6', category: '游戏' },
-      { name: 'Epic', icon: '🕹️', color: '#F5F5F5', category: '游戏' },
-      { name: '美团', icon: '🍽️', color: '#FFF8E1', category: '购物' },
-      { name: '饿了么', icon: '🥡', color: '#E3F2FD', category: '购物' },
-      { name: '百度', icon: '🔍', color: '#E3F2FD', category: '其他' },
-      { name: '钉钉', icon: '📌', color: '#E3F2FD', category: '工作' },
-      { name: '飞书', icon: '🕊️', color: '#E3F2FD', category: '工作' },
-      { name: 'Gmail', icon: '📧', color: '#FFEBEE', category: '工作' },
-      { name: 'Outlook', icon: '📨', color: '#E3F2FD', category: '工作' },
-      { name: '知乎', icon: '💡', color: '#E3F2FD', category: '社交' },
-      { name: 'Twitter/X', icon: '🐦', color: '#E3F2FD', category: '社交' },
-      { name: 'Instagram', icon: '📸', color: '#FCE4EC', category: '社交' },
-      { name: 'Telegram', icon: '✈️', color: '#E3F2FD', category: '社交' },
-    ],
+    templates: [],
     showTemplates: false,
-    icons: ['🔑', '💬', '🐧', '📕', '🎵', '🐱', '🛒', '🐶', '💰', '🎶', '🎧', '📺', '🎬', '📱', '🎮', '🔍', '📌', '📧', '💡', '📸', '🍎', '🎞️', '🕹️', '🍽️', '📣', '🔥', '💚', '✈️', '🐦', '🕊️', '📨', '🥡', '💳', '🏦', '💼', '☁️', '🖥️', '🔐'],
+    customIcons: [],
     showPassword: false,
     showIconPicker: false
   },
 
   onLoad(options) {
+    // 生成模板（带品牌图标）
+    const names = ['微信','QQ','微博','小红书','抖音','GitHub','淘宝','京东','拼多多','支付宝','网易云音乐','QQ音乐','Spotify','Apple','腾讯视频','爱奇艺','B站','Netflix','Steam','Epic','美团','饿了么','百度','钉钉','飞书','Gmail','Outlook','知乎','Twitter/X','Instagram','Telegram']
+    const catMap = {'微信':'社交','QQ':'社交','微博':'社交','小红书':'社交','抖音':'社交','GitHub':'工作','淘宝':'购物','京东':'购物','拼多多':'购物','支付宝':'金融','网易云音乐':'其他','QQ音乐':'其他','Spotify':'其他','Apple':'其他','腾讯视频':'其他','爱奇艺':'其他','B站':'其他','Netflix':'其他','Steam':'游戏','Epic':'游戏','美团':'购物','饿了么':'购物','百度':'其他','钉钉':'工作','飞书':'工作','Gmail':'工作','Outlook':'工作','知乎':'社交','Twitter/X':'社交','Instagram':'社交','Telegram':'社交'}
+
+    const templates = names.map(name => {
+      const icon = getIconByName(name)
+      return { name, letter: icon.letter, bg: icon.bg, textColor: icon.textColor || '#fff', category: catMap[name] || '其他' }
+    })
+
+    this.setData({ templates, customIcons: iconList })
+
     if (options.id) {
       this.setData({ isEdit: true, id: options.id })
       this.loadItem(options.id)
@@ -73,6 +53,7 @@ Page({
 
     const { decrypt: dec } = require('../../../utils/crypto')
     const categoryIndex = this.data.categories.indexOf(item.category)
+    const icon = item.iconLetter ? { letter: item.iconLetter, bg: item.iconBg } : getIconByName(item.platform)
 
     this.setData({
       platform: item.platform || '',
@@ -82,8 +63,9 @@ Page({
       remark: item.remark || '',
       category: item.category || '其他',
       categoryIndex: categoryIndex >= 0 ? categoryIndex : 5,
-      icon: item.icon || '🔑',
-      color: item.color || '#EDE9FF'
+      iconLetter: icon.letter,
+      iconBg: icon.bg,
+      iconTextColor: icon.textColor || '#fff'
     })
 
     wx.setNavigationBarTitle({ title: '编辑密码' })
@@ -111,8 +93,8 @@ Page({
   },
 
   onIconSelect(e) {
-    const icon = e.currentTarget.dataset.icon
-    this.setData({ icon, showIconPicker: false })
+    const { letter, bg } = e.currentTarget.dataset
+    this.setData({ iconLetter: letter, iconBg: bg, iconTextColor: '#fff', showIconPicker: false })
   },
 
   toggleTemplates() {
@@ -124,8 +106,9 @@ Page({
     const categoryIndex = this.data.categories.indexOf(tpl.category)
     this.setData({
       platform: tpl.name,
-      icon: tpl.icon,
-      color: tpl.color,
+      iconLetter: tpl.letter,
+      iconBg: tpl.bg,
+      iconTextColor: tpl.textColor || '#fff',
       category: tpl.category,
       categoryIndex: categoryIndex >= 0 ? categoryIndex : 5,
       showTemplates: false
@@ -143,7 +126,7 @@ Page({
   },
 
   onSave() {
-    const { platform, account, password, website, remark, category, icon, color, isEdit, id } = this.data
+    const { platform, account, password, website, remark, category, iconLetter, iconBg, iconTextColor, isEdit, id } = this.data
 
     if (!platform.trim()) {
       showToast('请输入平台名称')
@@ -166,8 +149,9 @@ Page({
       website: website.trim(),
       remark: remark.trim(),
       category,
-      icon,
-      color,
+      iconLetter,
+      iconBg,
+      iconTextColor: iconTextColor || '#fff',
       createdAt: isEdit ? undefined : new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }

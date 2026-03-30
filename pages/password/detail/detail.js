@@ -1,5 +1,6 @@
 const { getData, showConfirm, showToast, copyText, formatDate } = require('../../../utils/util')
 const { decrypt } = require('../../../utils/crypto')
+const { getIconByName } = require('../../../utils/icons')
 
 Page({
   data: {
@@ -23,9 +24,14 @@ Page({
       return
     }
     
+    const icon = item.iconLetter ? { letter: item.iconLetter, bg: item.iconBg, textColor: item.iconTextColor } : getIconByName(item.platform)
+    
     this.setData({
       item: {
         ...item,
+        brandLetter: icon.letter,
+        brandBg: icon.bg,
+        brandTextColor: icon.textColor || '#fff',
         createdAtDisplay: formatDate(item.createdAt, 'YYYY-MM-DD HH:mm'),
         updatedAtDisplay: formatDate(item.updatedAt, 'YYYY-MM-DD HH:mm')
       },

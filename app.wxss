@@ -281,3 +281,36 @@ page {
   from { opacity: 0; transform: translateY(12rpx); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ============ 品牌图标 ============ */
+.brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22%;
+  color: #fff;
+  font-weight: 600;
+  flex-shrink: 0;
+  font-style: normal;
+}
+
+.brand-icon-sm {
+  width: 64rpx;
+  height: 64rpx;
+  font-size: 26rpx;
+  border-radius: 16rpx;
+}
+
+.brand-icon-md {
+  width: 80rpx;
+  height: 80rpx;
+  font-size: 30rpx;
+  border-radius: 20rpx;
+}
+
+.brand-icon-lg {
+  width: 108rpx;
+  height: 108rpx;
+  font-size: 40rpx;
+  border-radius: 26rpx;
+}

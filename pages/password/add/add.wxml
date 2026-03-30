@@ -1,5 +1,5 @@
 <view class="page-add">
-  <!-- 快速选择常用APP -->
+  <!-- 快速选择 -->
   <view class="template-toggle" bindtap="toggleTemplates">
     <text class="tpl-toggle-text">快速选择常用平台</text>
     <text class="tpl-toggle-arrow">{{showTemplates ? '收起' : '展开'}}</text>
@@ -13,27 +13,29 @@
       data-tpl="{{item}}"
       bindtap="onTemplateTap"
     >
-      <text class="tpl-icon">{{item.icon}}</text>
+      <view class="brand-icon brand-icon-sm" style="background:{{item.bg}};width:40rpx;height:40rpx;font-size:20rpx;border-radius:10rpx;color:{{item.textColor || '#fff'}}">{{item.letter}}</view>
       <text class="tpl-name">{{item.name}}</text>
     </view>
   </view>
 
-  <!-- 图标选择 -->
+  <!-- 图标预览 -->
   <view class="icon-selector" bindtap="toggleIconPicker">
-    <view class="selected-icon" style="background: {{color}}">
-      <text class="icon-text">{{icon}}</text>
-    </view>
+    <view class="brand-icon brand-icon-lg" style="background:{{iconBg}};color:{{iconTextColor}}">{{iconLetter}}</view>
     <text class="icon-hint">更换图标</text>
   </view>
 
+  <!-- 图标选择器 -->
   <view class="icon-picker" wx:if="{{showIconPicker}}">
     <view 
       class="icon-option" 
-      wx:for="{{icons}}" 
-      wx:key="*this"
-      data-icon="{{item}}"
+      wx:for="{{customIcons}}" 
+      wx:key="name"
+      data-letter="{{item.letter}}"
+      data-bg="{{item.bg}}"
       bindtap="onIconSelect"
-    >{{item}}</view>
+    >
+      <view class="brand-icon" style="background:{{item.bg}};width:60rpx;height:60rpx;font-size:24rpx;border-radius:14rpx">{{item.letter}}</view>
+    </view>
   </view>
 
   <!-- 表单 -->
