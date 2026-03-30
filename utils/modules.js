@@ -16,17 +16,17 @@ const modules = [
     color: '#FF3B30',
     bgColor: '#FFE5E3',
     page: '/pages/subscription/subscription'
+  },
+  {
+    id: 'apimonitor',
+    name: 'API 监控',
+    icon: '📡',
+    desc: '实时查看 API 余额和用量',
+    color: '#FF9500',
+    bgColor: '#FFF3E0',
+    page: '/pages/apimonitor/apimonitor'
   }
   // 后续扩展：在此添加新模块
-  // {
-  //   id: 'notes',
-  //   name: '备忘录',
-  //   icon: '📝',
-  //   desc: '随时记录灵感想法',
-  //   color: '#34C759',
-  //   bgColor: '#E5F8EB',
-  //   page: '/pages/notes/notes'
-  // },
 ]
 
 module.exports = { modules }

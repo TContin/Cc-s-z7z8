@@ -1,0 +1,101 @@
+<view class="page-api">
+  <!-- 未配置 -->
+  <view class="empty-state" wx:if="{{!configured}}">
+    <text class="empty-icon">📡</text>
+    <text class="empty-text">尚未配置 API</text>
+    <text class="empty-sub">添加你的 API Key 开始监控</text>
+    <button class="btn-primary setup-btn" bindtap="onConfigTap">配置 API</button>
+  </view>
+
+  <!-- 已配置 -->
+  <block wx:else>
+    <!-- 顶部操作栏 -->
+    <view class="top-bar">
+      <view class="top-left">
+        <text class="top-title">API 监控</text>
+        <text class="top-time" wx:if="{{lastUpdate}}">{{lastUpdate}} 更新</text>
+      </view>
+      <view class="top-actions">
+        <text class="action-btn" bindtap="onRefresh">{{refreshing ? '刷新中...' : '刷新'}}</text>
+        <text class="action-btn" bindtap="onConfigTap">设置</text>
+      </view>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <block wx:else>
+      <!-- 概览卡片 -->
+      <view class="overview-grid">
+        <view class="overview-card">
+          <text class="ov-label">余额</text>
+          <text class="ov-value primary">{{balance}}</text>
+        </view>
+        <view class="overview-card">
+          <text class="ov-label">已使用</text>
+          <text class="ov-value danger">{{usedAmount}}</text>
+        </view>
+        <view class="overview-card">
+          <text class="ov-label">Token 用量</text>
+          <text class="ov-value">{{tokenUsage}}</text>
+        </view>
+        <view class="overview-card">
+          <text class="ov-label">请求次数</text>
+          <text class="ov-value">{{requestCount}}</text>
+        </view>
+      </view>
+
+      <!-- 密钥列表 -->
+      <view class="section-title" wx:if="{{keys.length > 0}}">密钥状态</view>
+      <view class="ios-group" wx:if="{{keys.length > 0}}">
+        <view class="key-item" wx:for="{{keys}}" wx:key="name">
+          <view class="key-info">
+            <view class="key-name">{{item.name}}</view>
+            <view class="key-id">{{item.key}}</view>
+          </view>
+          <view class="key-stats">
+            <view class="key-stat">
+              <text class="ks-value">{{item.calls}}</text>
+              <text class="ks-label">调用</text>
+            </view>
+            <view class="key-stat">
+              <text class="ks-value">{{item.todayCost}}</text>
+              <text class="ks-label">今日</text>
+            </view>
+            <view class="key-stat">
+              <text class="ks-value">{{item.weekCost}}</text>
+              <text class="ks-label">7日</text>
+            </view>
+          </view>
+          <view class="key-status {{item.isActive ? 'active' : 'inactive'}}">
+            <text>{{item.status}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 使用记录 -->
+      <view class="section-title" wx:if="{{records.length > 0}}">最近使用记录</view>
+      <view class="ios-group" wx:if="{{records.length > 0}}">
+        <view class="record-item" wx:for="{{records}}" wx:key="index">
+          <view class="rec-left">
+            <view class="rec-model">{{item.model}}</view>
+            <view class="rec-time">{{item.time}}</view>
+          </view>
+          <view class="rec-right">
+            <view class="rec-tokens">{{item.tokens}} tokens</view>
+            <view class="rec-cost">{{item.cost}}</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 无数据提示 -->
+      <view class="no-data" wx:if="{{keys.length === 0 && records.length === 0 && balance === '--'}}">
+        <text class="no-data-icon">📊</text>
+        <text class="no-data-text">暂无法获取数据</text>
+        <text class="no-data-sub">请检查 API Key 是否正确，或平台是否支持查询接口</text>
+      </view>
+    </block>
+  </block>
+</view>

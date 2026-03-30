@@ -10,7 +10,9 @@
     "pages/profile/profile",
     "pages/profile/security/security",
     "pages/profile/about/about",
-    "pages/profile/login/login"
+    "pages/profile/login/login",
+    "pages/apimonitor/apimonitor",
+    "pages/apimonitor/config/config"
   ],
   "window": {
     "navigationBarBackgroundColor": "#F2F2F7",

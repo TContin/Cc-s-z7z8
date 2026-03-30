@@ -1,0 +1,37 @@
+<view class="page-config">
+  <view class="section-title">选择平台</view>
+  <view class="preset-list">
+    <view 
+      class="preset-item {{baseUrl === item.url ? 'active' : ''}}"
+      wx:for="{{presets}}"
+      wx:key="name"
+      data-preset="{{item}}"
+      bindtap="onPresetTap"
+    >{{item.name}}</view>
+  </view>
+
+  <view class="form-card">
+    <view class="form-row">
+      <view class="form-row-label">名称</view>
+      <input class="form-row-input" placeholder="如：AI Code With" value="{{name}}" data-field="name" bindinput="onInput" />
+    </view>
+    <view class="form-row">
+      <view class="form-row-label">Base URL</view>
+      <input class="form-row-input" placeholder="https://api.aicodewith.com" value="{{baseUrl}}" data-field="baseUrl" bindinput="onInput" />
+    </view>
+    <view class="form-row">
+      <view class="form-row-label">API Key</view>
+      <input class="form-row-input mono" placeholder="sk-acw-..." value="{{apiKey}}" data-field="apiKey" bindinput="onInput" password="{{true}}" />
+    </view>
+  </view>
+
+  <view class="tip-card">
+    <text class="tip-title">说明</text>
+    <text class="tip-text">1. API Key 从平台后台的「密钥管理」获取</text>
+    <text class="tip-text">2. 数据仅存储在本地，不会上传</text>
+    <text class="tip-text">3. 体验版需在开发者工具勾选「不校验合法域名」</text>
+  </view>
+
+  <button class="btn-primary" bindtap="onSave">{{isEdit ? '保存修改' : '保存配置'}}</button>
+  <button class="btn-danger del-btn" wx:if="{{isEdit}}" bindtap="onDelete">删除配置</button>
+</view>
