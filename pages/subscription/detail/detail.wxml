@@ -1,9 +1,7 @@
 <view class="page-detail" wx:if="{{item}}">
   <!-- 头部 -->
   <view class="detail-header">
-    <view class="detail-icon-wrap" style="background: {{item.bgColor || '#FFE5E3'}}">
-      <text class="detail-icon">{{item.icon || '📋'}}</text>
-    </view>
+    <view class="brand-icon brand-icon-lg" style="background:{{item.brandBg}};color:{{item.brandTextColor}}">{{item.brandLetter}}</view>
     <view class="detail-title">{{item.name}}</view>
     <view class="tag tag-{{item.statusType}}">{{item.statusText}}</view>
   </view>

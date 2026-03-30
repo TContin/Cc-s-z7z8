@@ -29,6 +29,7 @@ Page({
     const status = getExpireStatus(item.expireDate)
     const days = daysRemaining(item.expireDate)
     const isPaid = item.cycle !== '无付费'
+    const icon = item.iconLetter ? { letter: item.iconLetter, bg: item.iconBg, textColor: item.iconTextColor } : getIconByName(item.name)
 
     this.setData({
       item: {
@@ -37,6 +38,9 @@ Page({
         statusType: status.type,
         daysLeft: days,
         isPaid,
+        brandLetter: icon.letter,
+        brandBg: icon.bg,
+        brandTextColor: icon.textColor || '#fff',
         createdAtDisplay: formatDate(item.createdAt, 'YYYY-MM-DD'),
         updatedAtDisplay: formatDate(item.updatedAt, 'YYYY-MM-DD'),
         monthlyPrice: (isPaid && item.price) ? this.calcMonthly(parseFloat(item.price), item.cycle) : ''

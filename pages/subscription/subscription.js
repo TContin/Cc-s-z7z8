@@ -1,4 +1,5 @@
 const { getData, showConfirm, showToast, getExpireStatus } = require('../../utils/util')
+const { getIconByName } = require('../../utils/icons')
 
 Page({
   data: {
@@ -25,12 +26,16 @@ Page({
     
     const enrichedList = list.map(item => {
       const status = getExpireStatus(item.expireDate)
+      const icon = item.iconLetter ? { letter: item.iconLetter, bg: item.iconBg, textColor: item.iconTextColor } : getIconByName(item.name)
       return {
         ...item,
         statusText: status.text,
         statusType: status.type,
         daysLeft: status.days,
-        isPaid: item.cycle !== '无付费'
+        isPaid: item.cycle !== '无付费',
+        brandLetter: icon.letter,
+        brandBg: icon.bg,
+        brandTextColor: icon.textColor || '#fff'
       }
     }).sort((a, b) => a.daysLeft - b.daysLeft)
 

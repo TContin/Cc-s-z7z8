@@ -31,9 +31,7 @@
       bindtap="onItemTap"
       bindlongpress="onItemLongpress"
     >
-      <view class="sub-icon-wrap" style="background: {{item.bgColor || '#FFE5E3'}}">
-        <text class="sub-icon">{{item.icon || '📋'}}</text>
-      </view>
+      <view class="brand-icon brand-icon-md" style="background:{{item.brandBg}};color:{{item.brandTextColor}}">{{item.brandLetter}}</view>
       <view class="sub-info">
         <view class="sub-name">{{item.name}}</view>
         <view class="sub-meta">

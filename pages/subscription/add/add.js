@@ -11,37 +11,28 @@ Page({
     expireDate: '',
     autoRenew: true,
     remark: '',
-    icon: '📋',
-    bgColor: '#FFE5E3',
+    iconLetter: '?',
+    iconBg: '#FF3B30',
+    iconTextColor: '#fff',
     cycles: ['无付费', '月付', '季付', '半年付', '年付'],
     cycleIndex: 1,
     isPaid: true,
-    icons: ['📋', '🎬', '🎵', '📱', '☁️', '🎮', '📧', '🛡️', '📦', '💻', '📡', '🏋️'],
+    customIcons: [],
     showIconPicker: false,
-    templates: [
-      { name: '爱奇艺', icon: '🎬', bgColor: '#E8F5E9' },
-      { name: '优酷', icon: '🎬', bgColor: '#FFF3E0' },
-      { name: '腾讯视频', icon: '🎬', bgColor: '#E3F2FD' },
-      { name: 'B站大会员', icon: '🎬', bgColor: '#FCE4EC' },
-      { name: 'Netflix', icon: '🎬', bgColor: '#FFEBEE' },
-      { name: 'Apple Music', icon: '🎵', bgColor: '#F3E5F5' },
-      { name: 'QQ音乐', icon: '🎵', bgColor: '#E8F5E9' },
-      { name: '网易云音乐', icon: '🎵', bgColor: '#FFEBEE' },
-      { name: 'Spotify', icon: '🎵', bgColor: '#E8F5E9' },
-      { name: 'iCloud', icon: '☁️', bgColor: '#E3F2FD' },
-      { name: 'WPS会员', icon: '📦', bgColor: '#FFF3E0' },
-      { name: 'GitHub Copilot', icon: '💻', bgColor: '#E8EAF6' },
-      { name: 'ChatGPT Plus', icon: '💻', bgColor: '#E0F2F1' },
-      { name: 'Adobe', icon: '📦', bgColor: '#FFEBEE' },
-      { name: 'Xbox Game Pass', icon: '🎮', bgColor: '#E8F5E9' },
-      { name: 'PS Plus', icon: '🎮', bgColor: '#E3F2FD' }
-    ],
+    templates: [],
     showTemplates: false
   },
 
   onLoad(options) {
     const today = formatDate(new Date(), 'YYYY-MM-DD')
-    this.setData({ expireDate: today })
+
+    const names = ['爱奇艺','优酷','腾讯视频','B站大会员','Netflix','Apple Music','QQ音乐','网易云音乐','Spotify','iCloud','WPS会员','GitHub Copilot','ChatGPT Plus','Adobe','Xbox Game Pass','PS Plus']
+    const templates = names.map(name => {
+      const icon = getIconByName(name)
+      return { name, letter: icon.letter, bg: icon.bg, textColor: icon.textColor || '#fff' }
+    })
+
+    this.setData({ expireDate: today, templates, customIcons: iconList })
 
     if (options.id) {
       this.setData({ isEdit: true, id: options.id })
@@ -60,6 +51,7 @@ Page({
 
     const cycleIndex = this.data.cycles.indexOf(item.cycle)
     const isPaid = item.cycle !== '无付费'
+    const icon = item.iconLetter ? { letter: item.iconLetter, bg: item.iconBg, textColor: item.iconTextColor } : getIconByName(item.name)
 
     this.setData({
       name: item.name || '',
@@ -70,8 +62,9 @@ Page({
       expireDate: item.expireDate || '',
       autoRenew: item.autoRenew !== false,
       remark: item.remark || '',
-      icon: item.icon || '📋',
-      bgColor: item.bgColor || '#FFE5E3'
+      iconLetter: icon.letter,
+      iconBg: icon.bg,
+      iconTextColor: icon.textColor || '#fff'
     })
 
     wx.setNavigationBarTitle({ title: '编辑订阅' })
@@ -87,68 +80,48 @@ Page({
     const cycle = this.data.cycles[index]
     const isPaid = cycle !== '无付费'
     this.setData({
-      cycleIndex: index,
-      cycle,
-      isPaid,
-      // 选无付费时清空价格和自动续费
+      cycleIndex: index, cycle, isPaid,
       price: isPaid ? this.data.price : '',
       autoRenew: isPaid ? this.data.autoRenew : false
     })
   },
 
-  onDateChange(e) {
-    this.setData({ expireDate: e.detail.value })
-  },
-
-  onAutoRenewChange(e) {
-    this.setData({ autoRenew: e.detail.value })
-  },
-
-  toggleIconPicker() {
-    this.setData({ showIconPicker: !this.data.showIconPicker })
-  },
+  onDateChange(e) { this.setData({ expireDate: e.detail.value }) },
+  onAutoRenewChange(e) { this.setData({ autoRenew: e.detail.value }) },
+  toggleIconPicker() { this.setData({ showIconPicker: !this.data.showIconPicker }) },
 
   onIconSelect(e) {
-    const icon = e.currentTarget.dataset.icon
-    this.setData({ icon, showIconPicker: false })
+    const { letter, bg } = e.currentTarget.dataset
+    this.setData({ iconLetter: letter, iconBg: bg, iconTextColor: '#fff', showIconPicker: false })
   },
 
-  toggleTemplates() {
-    this.setData({ showTemplates: !this.data.showTemplates })
-  },
+  toggleTemplates() { this.setData({ showTemplates: !this.data.showTemplates }) },
 
   onTemplateTap(e) {
     const tpl = e.currentTarget.dataset.tpl
     this.setData({
       name: tpl.name,
-      icon: tpl.icon,
-      bgColor: tpl.bgColor,
+      iconLetter: tpl.letter,
+      iconBg: tpl.bg,
+      iconTextColor: tpl.textColor || '#fff',
       showTemplates: false
     })
   },
 
   onSave() {
-    const { name, price, cycle, expireDate, autoRenew, remark, icon, bgColor, isEdit, id, isPaid } = this.data
+    const { name, price, cycle, expireDate, autoRenew, remark, iconLetter, iconBg, iconTextColor, isEdit, id, isPaid } = this.data
 
-    if (!name.trim()) {
-      showToast('请输入订阅名称')
-      return
-    }
-    if (!expireDate) {
-      showToast('请选择到期日期')
-      return
-    }
+    if (!name.trim()) { showToast('请输入订阅名称'); return }
+    if (!expireDate) { showToast('请选择到期日期'); return }
 
     const item = {
       id: isEdit ? id : generateId(),
       name: name.trim(),
       price: isPaid ? price : '',
-      cycle,
-      expireDate,
+      cycle, expireDate,
       autoRenew: isPaid ? autoRenew : false,
       remark: remark.trim(),
-      icon,
-      bgColor,
+      iconLetter, iconBg, iconTextColor: iconTextColor || '#fff',
       createdAt: isEdit ? undefined : new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }
@@ -156,13 +129,8 @@ Page({
     let list = getData('subscriptions', [])
     if (isEdit) {
       const index = list.findIndex(i => i.id === id)
-      if (index >= 0) {
-        item.createdAt = list[index].createdAt
-        list[index] = item
-      }
-    } else {
-      list.unshift(item)
-    }
+      if (index >= 0) { item.createdAt = list[index].createdAt; list[index] = item }
+    } else { list.unshift(item) }
 
     if (saveData('subscriptions', list)) {
       showToast(isEdit ? '已更新' : '已保存')
