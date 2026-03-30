@@ -1,0 +1,60 @@
+<view class="page-add">
+  <!-- 图标选择 -->
+  <view class="icon-selector" bindtap="toggleIconPicker">
+    <view class="selected-icon" style="background: {{color}}">
+      <text class="icon-text">{{icon}}</text>
+    </view>
+    <text class="icon-hint">更换图标</text>
+  </view>
+
+  <view class="icon-picker" wx:if="{{showIconPicker}}">
+    <view 
+      class="icon-option" 
+      wx:for="{{icons}}" 
+      wx:key="*this"
+      data-icon="{{item}}"
+      bindtap="onIconSelect"
+    >{{item}}</view>
+  </view>
+
+  <!-- 表单 -->
+  <view class="form-card">
+    <view class="form-row">
+      <view class="form-row-label">平台名称</view>
+      <input class="form-row-input" placeholder="如：微信、淘宝" value="{{platform}}" data-field="platform" bindinput="onInput" />
+    </view>
+    <view class="form-row">
+      <view class="form-row-label">账号</view>
+      <input class="form-row-input" placeholder="用户名、手机号或邮箱" value="{{account}}" data-field="account" bindinput="onInput" />
+    </view>
+    <view class="form-row">
+      <view class="form-row-label">密码</view>
+      <view class="password-row">
+        <input class="password-input" placeholder="输入密码" value="{{password}}" password="{{!showPassword}}" data-field="password" bindinput="onInput" />
+        <view class="pw-actions">
+          <text class="pw-toggle" bindtap="toggleShowPassword">{{showPassword ? '🙈' : '👁️'}}</text>
+          <text class="pw-gen" bindtap="generatePassword">🎲</text>
+        </view>
+      </view>
+    </view>
+    <view class="form-row">
+      <view class="form-row-label">分类</view>
+      <picker mode="selector" range="{{categories}}" value="{{categoryIndex}}" bindchange="onCategoryChange">
+        <view class="picker-row">
+          <text class="picker-value">{{category}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+    <view class="form-row">
+      <view class="form-row-label">网站地址</view>
+      <input class="form-row-input" placeholder="https://..." value="{{website}}" data-field="website" bindinput="onInput" />
+    </view>
+    <view class="form-row">
+      <view class="form-row-label">备注</view>
+      <textarea class="form-row-textarea" placeholder="选填" value="{{remark}}" data-field="remark" bindinput="onInput" auto-height maxlength="500" />
+    </view>
+  </view>
+
+  <button class="btn-primary save-btn" bindtap="onSave">{{isEdit ? '保存修改' : '保存'}}</button>
+</view>

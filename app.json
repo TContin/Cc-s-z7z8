@@ -1,0 +1,44 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/password/password",
+    "pages/password/add/add",
+    "pages/password/detail/detail",
+    "pages/subscription/subscription",
+    "pages/subscription/add/add",
+    "pages/subscription/detail/detail",
+    "pages/profile/profile",
+    "pages/profile/security/security",
+    "pages/profile/about/about"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#F2F2F7",
+    "navigationBarTitleText": "工具箱",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F2F2F7",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#8E8E93",
+    "selectedColor": "#007AFF",
+    "backgroundColor": "#F8F8F8",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "工具箱",
+        "iconPath": "assets/icons/home.png",
+        "selectedIconPath": "assets/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/icons/profile.png",
+        "selectedIconPath": "assets/icons/profile-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

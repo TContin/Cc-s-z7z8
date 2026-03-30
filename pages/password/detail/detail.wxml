@@ -1,0 +1,57 @@
+<view class="page-detail" wx:if="{{item}}">
+  <!-- 头部 -->
+  <view class="detail-header">
+    <view class="detail-icon-wrap" style="background: {{item.color || '#E3F0FF'}}">
+      <text class="detail-icon">{{item.icon || '🔑'}}</text>
+    </view>
+    <view class="detail-title">{{item.platform}}</view>
+    <view class="detail-category tag">{{item.category || '其他'}}</view>
+  </view>
+
+  <!-- 信息卡片 -->
+  <view class="info-card">
+    <view class="info-row" bindtap="copyAccount">
+      <view class="info-left">
+        <text class="info-label">账号</text>
+        <text class="info-value">{{item.account}}</text>
+      </view>
+      <text class="copy-btn">复制</text>
+    </view>
+
+    <view class="info-row">
+      <view class="info-left" bindtap="copyPassword">
+        <text class="info-label">密码</text>
+        <text class="info-value">{{showPassword ? decryptedPassword : '••••••••'}}</text>
+      </view>
+      <view class="info-actions">
+        <text class="eye-btn" bindtap="togglePassword">{{showPassword ? '🙈' : '👁️'}}</text>
+        <text class="copy-btn" bindtap="copyPassword">复制</text>
+      </view>
+    </view>
+
+    <view class="info-row" wx:if="{{item.website}}" bindtap="copyWebsite">
+      <view class="info-left">
+        <text class="info-label">网站</text>
+        <text class="info-value link">{{item.website}}</text>
+      </view>
+      <text class="copy-btn">复制</text>
+    </view>
+
+    <view class="info-row" wx:if="{{item.remark}}">
+      <view class="info-left">
+        <text class="info-label">备注</text>
+        <text class="info-value remark">{{item.remark}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="time-info">
+    <text class="time-text">创建于 {{item.createdAtDisplay}}</text>
+    <text class="time-text" wx:if="{{item.updatedAtDisplay !== item.createdAtDisplay}}">更新于 {{item.updatedAtDisplay}}</text>
+  </view>
+
+  <view class="action-buttons">
+    <button class="btn-secondary" bindtap="onEdit">编辑</button>
+    <button class="btn-danger" bindtap="onDelete">删除</button>
+  </view>
+</view>

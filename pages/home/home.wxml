@@ -1,0 +1,55 @@
+<view class="page-home">
+  <!-- iOS 风格顶部 -->
+  <view class="header">
+    <view class="header-date">{{today}}</view>
+    <view class="header-greeting">{{greeting}}</view>
+  </view>
+
+  <!-- 数据概览 -->
+  <view class="overview" wx:if="{{stats.passwordCount > 0 || stats.subscriptionCount > 0}}">
+    <view class="overview-item">
+      <text class="overview-num">{{stats.passwordCount}}</text>
+      <text class="overview-label">密码</text>
+    </view>
+    <view class="overview-item">
+      <text class="overview-num">{{stats.subscriptionCount}}</text>
+      <text class="overview-label">订阅</text>
+    </view>
+    <view class="overview-item" wx:if="{{stats.expiringSoon > 0}}">
+      <text class="overview-num warn">{{stats.expiringSoon}}</text>
+      <text class="overview-label">即将到期</text>
+    </view>
+    <view class="overview-item" wx:if="{{stats.expired > 0}}">
+      <text class="overview-num danger">{{stats.expired}}</text>
+      <text class="overview-label">已过期</text>
+    </view>
+  </view>
+
+  <!-- 功能列表 - iOS grouped style -->
+  <view class="section-title">工具</view>
+  <view class="ios-group">
+    <view 
+      class="ios-cell"
+      wx:for="{{modules}}"
+      wx:key="id"
+      data-page="{{item.page}}"
+      bindtap="onModuleTap"
+    >
+      <view class="cell-icon" style="background: {{item.bgColor}}">
+        <text>{{item.icon}}</text>
+      </view>
+      <view class="cell-body">
+        <view class="cell-title">{{item.name}}</view>
+        <view class="cell-desc">{{item.desc}}</view>
+      </view>
+      <view class="cell-arrow">
+        <text class="arrow-icon">›</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部 -->
+  <view class="home-footer" wx:if="{{modules.length <= 2}}">
+    <text>更多工具，敬请期待</text>
+  </view>
+</view>

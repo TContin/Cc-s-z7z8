@@ -1,0 +1,62 @@
+<view class="page-subscription">
+  <!-- 月费概览 - 只在有付费订阅时显示 -->
+  <view class="cost-card" wx:if="{{hasPaidSubs}}">
+    <view class="cost-inner">
+      <view class="cost-label">每月订阅预估</view>
+      <view class="cost-amount">
+        <text class="cost-symbol">¥</text>
+        <text class="cost-num">{{totalMonthly}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Tab 筛选 -->
+  <view class="tab-bar">
+    <view 
+      class="tab-item {{currentTab === item.key ? 'active' : ''}}"
+      wx:for="{{tabs}}"
+      wx:key="key"
+      data-tab="{{item.key}}"
+      bindtap="onTabTap"
+    >{{item.name}}</view>
+  </view>
+
+  <!-- 列表 -->
+  <view class="sub-list" wx:if="{{!isEmpty}}">
+    <view 
+      class="sub-item"
+      wx:for="{{filteredList}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="onItemTap"
+      bindlongpress="onItemLongpress"
+    >
+      <view class="sub-icon-wrap" style="background: {{item.bgColor || '#FFE5E3'}}">
+        <text class="sub-icon">{{item.icon || '📋'}}</text>
+      </view>
+      <view class="sub-info">
+        <view class="sub-name">{{item.name}}</view>
+        <view class="sub-meta">
+          <text class="sub-cycle" wx:if="{{item.isPaid}}">{{item.cycle}}</text>
+          <text class="sub-cycle" wx:else>免费/无付费</text>
+          <text class="sub-price" wx:if="{{item.price && item.isPaid}}">¥{{item.price}}</text>
+        </view>
+      </view>
+      <view class="sub-right">
+        <view class="tag tag-{{item.statusType}}">{{item.statusText}}</view>
+        <view class="sub-date">{{item.expireDate}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{isEmpty}}">
+    <text class="empty-icon">📋</text>
+    <text class="empty-text">{{currentTab !== 'all' ? '此分类下暂无记录' : '暂无订阅记录'}}</text>
+    <text class="empty-sub" wx:if="{{currentTab === 'all'}}">点击 + 添加订阅</text>
+  </view>
+
+  <view class="fab" bindtap="onAddTap">
+    <text class="fab-icon">+</text>
+  </view>
+</view>

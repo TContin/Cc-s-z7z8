@@ -1,0 +1,85 @@
+<view class="page-add">
+  <!-- 快速选择 -->
+  <view class="template-toggle" bindtap="toggleTemplates">
+    <text class="tpl-toggle-text">快速选择常用订阅</text>
+    <text class="tpl-toggle-arrow">{{showTemplates ? '收起' : '展开'}}</text>
+  </view>
+
+  <view class="template-grid" wx:if="{{showTemplates}}">
+    <view 
+      class="template-item"
+      wx:for="{{templates}}"
+      wx:key="name"
+      data-tpl="{{item}}"
+      bindtap="onTemplateTap"
+    >
+      <text class="tpl-icon">{{item.icon}}</text>
+      <text class="tpl-name">{{item.name}}</text>
+    </view>
+  </view>
+
+  <!-- 图标 -->
+  <view class="icon-selector" bindtap="toggleIconPicker">
+    <view class="selected-icon" style="background: {{bgColor}}">
+      <text class="icon-text">{{icon}}</text>
+    </view>
+    <text class="icon-hint">更换图标</text>
+  </view>
+
+  <view class="icon-picker" wx:if="{{showIconPicker}}">
+    <view 
+      class="icon-option" 
+      wx:for="{{icons}}" 
+      wx:key="*this"
+      data-icon="{{item}}"
+      bindtap="onIconSelect"
+    >{{item}}</view>
+  </view>
+
+  <!-- 表单 -->
+  <view class="form-card">
+    <view class="form-row">
+      <view class="form-row-label">订阅名称</view>
+      <input class="form-row-input" placeholder="如：Netflix、爱奇艺" value="{{name}}" data-field="name" bindinput="onInput" />
+    </view>
+
+    <view class="form-row">
+      <view class="form-row-label">付费周期</view>
+      <picker mode="selector" range="{{cycles}}" value="{{cycleIndex}}" bindchange="onCycleChange">
+        <view class="picker-row">
+          <text class="picker-value">{{cycle}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 有付费时才显示价格 -->
+    <view class="form-row" wx:if="{{isPaid}}">
+      <view class="form-row-label">价格（元）</view>
+      <input class="form-row-input" placeholder="订阅价格" type="digit" value="{{price}}" data-field="price" bindinput="onInput" />
+    </view>
+
+    <view class="form-row">
+      <view class="form-row-label">到期日期</view>
+      <picker mode="date" value="{{expireDate}}" start="2020-01-01" end="2030-12-31" bindchange="onDateChange">
+        <view class="picker-row">
+          <text class="picker-value">{{expireDate || '请选择'}}</text>
+          <text class="picker-arrow">📅</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 有付费时才显示自动续费 -->
+    <view class="form-row switch-row" wx:if="{{isPaid}}">
+      <text class="switch-label">自动续费</text>
+      <switch checked="{{autoRenew}}" color="#007AFF" bindchange="onAutoRenewChange" />
+    </view>
+
+    <view class="form-row">
+      <view class="form-row-label">备注</view>
+      <textarea class="form-row-textarea" placeholder="选填" value="{{remark}}" data-field="remark" bindinput="onInput" auto-height maxlength="500" />
+    </view>
+  </view>
+
+  <button class="btn-primary save-btn" bindtap="onSave">{{isEdit ? '保存修改' : '保存'}}</button>
+</view>

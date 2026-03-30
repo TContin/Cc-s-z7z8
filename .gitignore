@@ -1,0 +1,32 @@
+# 小程序本地配置
+project.private.config.json
+
+# 依赖
+node_modules/
+miniprogram_npm/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.log
+*.tmp
+
+# 部署密钥（绝对不能提交！）
+private.key
+deploy.config.json
+
+# Webhook 运行时文件
+webhook/webhook.pid
+webhook/webhook.log
+
+# AI 工具缓存
+.aider*

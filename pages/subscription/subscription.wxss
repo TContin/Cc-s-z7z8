@@ -1,0 +1,151 @@
+.page-subscription {
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(180rpx + env(safe-area-inset-bottom));
+}
+
+/* 花费卡片 - iOS 毛玻璃感 */
+.cost-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  margin-bottom: 20rpx;
+  overflow: hidden;
+}
+
+.cost-inner {
+  padding: 32rpx;
+  text-align: center;
+}
+
+.cost-label {
+  font-size: 24rpx;
+  color: var(--text-hint);
+  margin-bottom: 8rpx;
+}
+
+.cost-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.cost-symbol {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-right: 4rpx;
+}
+
+.cost-num {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -1rpx;
+}
+
+/* Tab */
+.tab-bar {
+  display: flex;
+  background: rgba(118, 118, 128, 0.12);
+  border-radius: 16rpx;
+  padding: 4rpx;
+  margin-bottom: 20rpx;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  border-radius: 14rpx;
+  font-weight: 500;
+}
+
+.tab-item.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08);
+}
+
+/* 列表 - iOS grouped */
+.sub-list {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.sub-item {
+  display: flex;
+  align-items: center;
+  padding: 22rpx 28rpx;
+  position: relative;
+}
+
+.sub-item::after {
+  content: '';
+  position: absolute;
+  left: 116rpx;
+  right: 0;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--separator);
+}
+
+.sub-item:last-child::after {
+  display: none;
+}
+
+.sub-icon-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sub-icon {
+  font-size: 32rpx;
+}
+
+.sub-info {
+  flex: 1;
+  margin-left: 20rpx;
+  overflow: hidden;
+}
+
+.sub-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4rpx;
+}
+
+.sub-meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.sub-cycle {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}
+
+.sub-price {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.sub-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.sub-date {
+  font-size: 20rpx;
+  color: var(--text-hint);
+  margin-top: 6rpx;
+}

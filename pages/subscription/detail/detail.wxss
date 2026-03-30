@@ -1,0 +1,147 @@
+.page-detail {
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+}
+
+/* 头部 */
+.detail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx 0 24rpx;
+}
+
+.detail-icon-wrap {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.detail-icon {
+  font-size: 56rpx;
+}
+
+.detail-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+}
+
+/* 倒计时卡片 */
+.countdown-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 32rpx 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.countdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.countdown-item {
+  text-align: center;
+}
+
+.countdown-num {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.countdown-num.small {
+  font-size: 36rpx;
+}
+
+.countdown-num.expired-num {
+  color: var(--danger);
+}
+
+.countdown-label {
+  font-size: 22rpx;
+  color: var(--text-hint);
+  margin-top: 4rpx;
+}
+
+.countdown-divider {
+  width: 1rpx;
+  height: 56rpx;
+  background: var(--separator);
+}
+
+/* 信息卡片 */
+.info-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 20rpx;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 32rpx;
+  position: relative;
+}
+
+.info-row::after {
+  content: '';
+  position: absolute;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--separator);
+}
+
+.info-row:last-child::after {
+  display: none;
+}
+
+.remark-row {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: var(--text-hint);
+}
+
+.info-remark {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  margin-top: 8rpx;
+  line-height: 1.6;
+}
+
+/* 时间 */
+.time-info {
+  text-align: center;
+  padding: 8rpx 0 24rpx;
+}
+
+.time-text {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}
+
+/* 按钮 */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}

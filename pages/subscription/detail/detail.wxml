@@ -1,0 +1,71 @@
+<view class="page-detail" wx:if="{{item}}">
+  <!-- 头部 -->
+  <view class="detail-header">
+    <view class="detail-icon-wrap" style="background: {{item.bgColor || '#FFE5E3'}}">
+      <text class="detail-icon">{{item.icon || '📋'}}</text>
+    </view>
+    <view class="detail-title">{{item.name}}</view>
+    <view class="tag tag-{{item.statusType}}">{{item.statusText}}</view>
+  </view>
+
+  <!-- 倒计时 -->
+  <view class="countdown-card">
+    <view class="countdown-row">
+      <view class="countdown-item" wx:if="{{item.daysLeft >= 0}}">
+        <view class="countdown-num">{{item.daysLeft}}</view>
+        <view class="countdown-label">天后到期</view>
+      </view>
+      <view class="countdown-item" wx:else>
+        <view class="countdown-num expired-num">{{0 - item.daysLeft}}</view>
+        <view class="countdown-label">天前已过期</view>
+      </view>
+
+      <!-- 有付费才显示价格信息 -->
+      <block wx:if="{{item.isPaid && item.price}}">
+        <view class="countdown-divider"></view>
+        <view class="countdown-item">
+          <view class="countdown-num small">¥{{item.price}}</view>
+          <view class="countdown-label">{{item.cycle}}</view>
+        </view>
+        <view class="countdown-divider" wx:if="{{item.monthlyPrice && item.cycle !== '月付'}}"></view>
+        <view class="countdown-item" wx:if="{{item.monthlyPrice && item.cycle !== '月付'}}">
+          <view class="countdown-num small">¥{{item.monthlyPrice}}</view>
+          <view class="countdown-label">月均</view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 详情 -->
+  <view class="info-card">
+    <view class="info-row">
+      <text class="info-label">到期日期</text>
+      <text class="info-value">{{item.expireDate}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">类型</text>
+      <text class="info-value">{{item.isPaid ? item.cycle : '无付费'}}</text>
+    </view>
+    <view class="info-row" wx:if="{{item.isPaid}}">
+      <text class="info-label">自动续费</text>
+      <text class="info-value">{{item.autoRenew ? '已开启' : '未开启'}}</text>
+    </view>
+    <view class="info-row remark-row" wx:if="{{item.remark}}">
+      <text class="info-label">备注</text>
+      <text class="info-remark">{{item.remark}}</text>
+    </view>
+  </view>
+
+  <view class="time-info">
+    <text class="time-text">添加于 {{item.createdAtDisplay}}</text>
+  </view>
+
+  <!-- 操作 -->
+  <view class="action-buttons">
+    <button class="btn-primary" bindtap="onRenew">
+      {{item.isPaid ? '快捷续期（+1个' + (item.cycle === '月付' ? '月' : item.cycle === '季付' ? '季' : item.cycle === '半年付' ? '半年' : '年') + '）' : '延期一个月'}}
+    </button>
+    <button class="btn-secondary" bindtap="onEdit">编辑</button>
+    <button class="btn-danger" bindtap="onDelete">删除</button>
+  </view>
+</view>

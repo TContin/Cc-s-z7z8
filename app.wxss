@@ -1,0 +1,283 @@
+/* ============ iOS 风格全局变量 ============ */
+page {
+  --primary: #007AFF;
+  --primary-light: #409CFF;
+  --primary-bg: #F2F7FF;
+  --success: #34C759;
+  --warning: #FF9500;
+  --danger: #FF3B30;
+  --text-primary: #1C1C1E;
+  --text-secondary: #3C3C43;
+  --text-hint: #8E8E93;
+  --bg-page: #F2F2F7;
+  --bg-card: #FFFFFF;
+  --bg-grouped: #F2F2F7;
+  --border: rgba(60, 60, 67, 0.08);
+  --separator: rgba(60, 60, 67, 0.12);
+  --shadow: none;
+  --radius: 20rpx;
+  --radius-sm: 16rpx;
+
+  font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 28rpx;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============ iOS 通用工具类 ============ */
+.container {
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+}
+
+/* iOS 分组卡片 */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 0;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+}
+
+.card-inset {
+  padding: 28rpx 32rpx;
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16rpx;
+}
+
+/* iOS 分组标题 */
+.section-title {
+  font-size: 26rpx;
+  color: var(--text-hint);
+  padding: 24rpx 32rpx 12rpx;
+  text-transform: uppercase;
+  letter-spacing: 1rpx;
+  font-weight: 400;
+}
+
+/* iOS 按钮 */
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 24rpx 0;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+  width: 100%;
+  line-height: 1.4;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--primary);
+  border: none;
+  border-radius: var(--radius);
+  padding: 24rpx 0;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+  width: 100%;
+  line-height: 1.4;
+}
+
+.btn-secondary::after {
+  border: none;
+}
+
+.btn-danger {
+  background: var(--bg-card);
+  color: var(--danger);
+  border: none;
+  border-radius: var(--radius);
+  padding: 24rpx 0;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+  width: 100%;
+  line-height: 1.4;
+}
+
+.btn-danger::after {
+  border: none;
+}
+
+/* iOS 输入框样式 */
+.form-group {
+  margin-bottom: 0;
+  padding: 0 32rpx;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  font-weight: 400;
+  display: block;
+  padding: 20rpx 0 8rpx;
+}
+
+.form-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1rpx solid var(--separator);
+  border-radius: 0;
+  padding: 16rpx 0;
+  font-size: 30rpx;
+  box-sizing: border-box;
+  color: var(--text-primary);
+}
+
+.form-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1rpx solid var(--separator);
+  border-radius: 0;
+  padding: 16rpx 0;
+  font-size: 30rpx;
+  min-height: 120rpx;
+  box-sizing: border-box;
+  color: var(--text-primary);
+}
+
+/* iOS 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 160rpx 0 80rpx;
+}
+
+.empty-icon {
+  font-size: 100rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 30rpx;
+  color: var(--text-hint);
+  font-weight: 500;
+}
+
+.empty-sub {
+  font-size: 26rpx;
+  color: var(--text-hint);
+  margin-top: 8rpx;
+}
+
+/* iOS 列表项 */
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  background: var(--bg-card);
+  position: relative;
+}
+
+.list-item::after {
+  content: '';
+  position: absolute;
+  left: 32rpx;
+  right: 0;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--separator);
+}
+
+.list-item:last-child::after {
+  display: none;
+}
+
+/* iOS 标签 */
+.tag {
+  display: inline-block;
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.tag-success {
+  background: rgba(52, 199, 89, 0.12);
+  color: var(--success);
+}
+
+.tag-warning {
+  background: rgba(255, 149, 0, 0.12);
+  color: var(--warning);
+}
+
+.tag-danger {
+  background: rgba(255, 59, 48, 0.12);
+  color: var(--danger);
+}
+
+/* iOS 搜索栏 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: rgba(118, 118, 128, 0.12);
+  border-radius: 18rpx;
+  padding: 14rpx 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.search-icon {
+  font-size: 28rpx;
+  margin-right: 12rpx;
+  color: var(--text-hint);
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+/* iOS 浮动按钮 */
+.fab {
+  position: fixed;
+  right: 36rpx;
+  bottom: 110rpx;
+  width: 100rpx;
+  height: 100rpx;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 24rpx rgba(0, 122, 255, 0.35);
+  z-index: 100;
+}
+
+.fab-icon {
+  font-size: 52rpx;
+  color: #fff;
+  line-height: 1;
+  margin-top: -4rpx;
+}
+
+/* iOS 过渡动画 */
+.fade-in {
+  animation: fadeIn 0.35s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}

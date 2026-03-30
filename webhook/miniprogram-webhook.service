@@ -1,0 +1,16 @@
+[Unit]
+Description=MiniProgram Webhook Deploy Service
+After=network.target
+
+[Service]
+Type=simple
+User=REPLACE_WITH_YOUR_USERNAME
+WorkingDirectory=REPLACE_WITH_PROJECT_DIR/webhook
+ExecStart=/usr/bin/python3 REPLACE_WITH_PROJECT_DIR/webhook/server.py
+Restart=always
+RestartSec=5
+Environment=WEBHOOK_PORT=9000
+Environment=WEBHOOK_SECRET=
+
+[Install]
+WantedBy=multi-user.target

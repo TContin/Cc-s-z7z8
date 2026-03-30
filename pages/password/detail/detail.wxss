@@ -1,0 +1,138 @@
+.page-detail {
+  padding: 16rpx 32rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+}
+
+/* 头部 */
+.detail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx 0;
+}
+
+.detail-icon-wrap {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.detail-icon {
+  font-size: 56rpx;
+}
+
+.detail-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+}
+
+.detail-category {
+  background: rgba(0, 122, 255, 0.1);
+  color: var(--primary);
+}
+
+/* iOS 信息卡片 */
+.info-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24rpx;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 32rpx;
+  position: relative;
+}
+
+.info-row::after {
+  content: '';
+  position: absolute;
+  left: 32rpx;
+  right: 32rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--separator);
+}
+
+.info-row:last-child::after {
+  display: none;
+}
+
+.info-left {
+  flex: 1;
+  overflow: hidden;
+}
+
+.info-label {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-hint);
+  margin-bottom: 4rpx;
+}
+
+.info-value {
+  display: block;
+  font-size: 30rpx;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.info-value.link {
+  color: var(--primary);
+}
+
+.info-value.remark {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.info-actions {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  flex-shrink: 0;
+}
+
+.copy-btn {
+  font-size: 24rpx;
+  color: var(--primary);
+  padding: 6rpx 16rpx;
+  background: rgba(0, 122, 255, 0.08);
+  border-radius: 12rpx;
+  flex-shrink: 0;
+}
+
+.eye-btn {
+  font-size: 32rpx;
+}
+
+/* 时间 */
+.time-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  padding: 8rpx 0 24rpx;
+  align-items: center;
+}
+
+.time-text {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
