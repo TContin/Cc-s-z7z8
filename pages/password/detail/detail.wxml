@@ -1,7 +1,10 @@
 <view class="page-detail" wx:if="{{item}}">
   <!-- 头部 -->
   <view class="detail-header">
-    <view class="brand-icon brand-icon-lg" style="background:{{item.brandBg}};color:{{item.brandTextColor}}">{{item.brandLetter}}</view>
+    <view class="brand-icon brand-icon-lg" style="background:{{item.brandLogo ? 'transparent' : item.brandBg}}">
+      <image wx:if="{{item.brandLogo}}" class="brand-logo" src="{{item.brandLogo}}" mode="aspectFit" />
+      <text wx:else>{{item.brandLetter}}</text>
+    </view>
     <view class="detail-title">{{item.platform}}</view>
     <view class="detail-category tag">{{item.category || '其他'}}</view>
   </view>

@@ -1,5 +1,4 @@
 <view class="page-add">
-  <!-- 快速选择 -->
   <view class="template-toggle" bindtap="toggleTemplates">
     <text class="tpl-toggle-text">快速选择常用订阅</text>
     <text class="tpl-toggle-arrow">{{showTemplates ? '收起' : '展开'}}</text>
@@ -7,14 +6,19 @@
 
   <view class="template-grid" wx:if="{{showTemplates}}">
     <view class="template-item" wx:for="{{templates}}" wx:key="name" data-tpl="{{item}}" bindtap="onTemplateTap">
-      <view class="brand-icon" style="background:{{item.bg}};width:40rpx;height:40rpx;font-size:20rpx;border-radius:10rpx;color:{{item.textColor || '#fff'}}">{{item.letter}}</view>
+      <view class="brand-icon brand-icon-mini">
+        <image wx:if="{{item.logo}}" class="brand-logo" src="{{item.logo}}" mode="aspectFit" />
+        <text wx:else style="color:#fff">{{item.letter}}</text>
+      </view>
       <text class="tpl-name">{{item.name}}</text>
     </view>
   </view>
 
-  <!-- 图标 -->
   <view class="icon-selector" bindtap="toggleIconPicker">
-    <view class="brand-icon brand-icon-lg" style="background:{{iconBg}};color:{{iconTextColor}}">{{iconLetter}}</view>
+    <view class="brand-icon brand-icon-lg" style="background:{{iconLogo ? 'transparent' : iconBg}}">
+      <image wx:if="{{iconLogo}}" class="brand-logo" src="{{iconLogo}}" mode="aspectFit" />
+      <text wx:else>{{iconLetter}}</text>
+    </view>
     <text class="icon-hint">更换图标</text>
   </view>
 
@@ -24,7 +28,6 @@
     </view>
   </view>
 
-  <!-- 表单 -->
   <view class="form-card">
     <view class="form-row">
       <view class="form-row-label">订阅名称</view>

@@ -1,115 +1,122 @@
 /**
- * 品牌图标配置 - 使用品牌色+首字母/符号代替Emoji
- * iOS Settings 风格：圆角方块 + 白色图标/文字
+ * 品牌图标配置 - 使用网络Logo图片 + 品牌色兜底
  */
 
-// 密码本 - 常用平台
-const passwordIcons = {
-  '微信':     { letter: 'W',  bg: '#07C160' },
-  'QQ':       { letter: 'Q',  bg: '#12B7F5' },
-  '微博':     { letter: '微', bg: '#E6162D' },
-  '小红书':   { letter: '红', bg: '#FE2C55' },
-  '抖音':     { letter: 'D',  bg: '#000000' },
-  'GitHub':   { letter: 'G',  bg: '#24292F' },
-  '淘宝':     { letter: '淘', bg: '#FF5000' },
-  '京东':     { letter: 'J',  bg: '#E4002B' },
-  '拼多多':   { letter: '拼', bg: '#E02E24' },
-  '支付宝':   { letter: 'A',  bg: '#1677FF' },
-  '网易云音乐': { letter: '♪', bg: '#C20C0C' },
-  'QQ音乐':   { letter: '♫', bg: '#31C27C' },
-  'Spotify':  { letter: 'S',  bg: '#1DB954' },
-  'Apple':    { letter: 'A',  bg: '#000000' },
-  '腾讯视频': { letter: 'V',  bg: '#FF7701' },
-  '爱奇艺':   { letter: 'iQ', bg: '#00BE06' },
-  'B站':      { letter: 'B',  bg: '#FB7299' },
-  'Netflix':  { letter: 'N',  bg: '#E50914' },
-  'Steam':    { letter: 'S',  bg: '#1B2838' },
-  'Epic':     { letter: 'E',  bg: '#000000' },
-  '美团':     { letter: '美', bg: '#FFD100', textColor: '#000' },
-  '饿了么':   { letter: '饿', bg: '#0097FF' },
-  '百度':     { letter: 'B',  bg: '#2932E1' },
-  '钉钉':     { letter: 'D',  bg: '#3296FA' },
-  '飞书':     { letter: 'F',  bg: '#3370FF' },
-  'Gmail':    { letter: 'G',  bg: '#EA4335' },
-  'Outlook':  { letter: 'O',  bg: '#0078D4' },
-  '知乎':     { letter: '知', bg: '#0066FF' },
-  'Twitter/X': { letter: '𝕏', bg: '#000000' },
-  'Instagram': { letter: 'I', bg: '#E4405F' },
-  'Telegram': { letter: 'T',  bg: '#0088CC' },
-  'ChatGPT Plus': { letter: 'G', bg: '#10A37F' },
-  'GitHub Copilot': { letter: 'C', bg: '#000000' },
-  'WPS会员':  { letter: 'W',  bg: '#D4451A' },
-  'Adobe':    { letter: 'A',  bg: '#FF0000' },
-  'Xbox Game Pass': { letter: 'X', bg: '#107C10' },
-  'PS Plus':  { letter: 'P',  bg: '#003087' },
-  'iCloud':   { letter: '☁',  bg: '#3693F5' },
+// Logo 图片 URL 映射
+const logoUrls = {
+  '微信':     'https://img.icons8.com/color/96/wechat.png',
+  'QQ':       'https://img.icons8.com/color/96/qq.png',
+  '微博':     'https://img.icons8.com/color/96/sina-weibo.png',
+  '小红书':   'https://www.xiaohongshu.com/favicon.ico',
+  '抖音':     'https://lf1-cdn-tos.bytegoofy.com/goofy/ies/douyin_web/public/favicon.ico',
+  'GitHub':   'https://github.githubassets.com/favicons/favicon-dark.svg',
+  '淘宝':     'https://img.alicdn.com/favicon.ico',
+  '京东':     'https://img.icons8.com/color/96/jd.png',
+  '拼多多':   'https://img.icons8.com/color/96/pinduoduo.png',
+  '支付宝':   'https://img.icons8.com/color/96/alipay.png',
+  '网易云音乐': 'https://s1.music.126.net/style/favicon.ico',
+  'QQ音乐':   'https://y.qq.com/favicon.ico',
+  'Spotify':  'https://img.icons8.com/color/96/spotify--v1.png',
+  'Apple':    'https://img.icons8.com/ios-filled/96/mac-os.png',
+  '腾讯视频': 'https://v.qq.com/favicon.ico',
+  '爱奇艺':   'https://www.iqiyi.com/favicon.ico',
+  'B站':      'https://img.icons8.com/color/96/bilibili.png',
+  'Netflix':  'https://img.icons8.com/color/96/netflix.png',
+  'Steam':    'https://img.icons8.com/color/96/steam.png',
+  'Epic':     'https://img.icons8.com/color/96/epic-games.png',
+  '美团':     'https://img.icons8.com/color/96/meituan.png',
+  '饿了么':   'https://img.icons8.com/color/96/ele-me.png',
+  '百度':     'https://img.icons8.com/color/96/baidu.png',
+  '钉钉':     'https://img.icons8.com/color/96/dingtalk.png',
+  '飞书':     'https://sf3-scmcdn-tos.feishucdn.com/obj/static/favicon.ico',
+  'Gmail':    'https://img.icons8.com/color/96/gmail-new.png',
+  'Outlook':  'https://img.icons8.com/color/96/microsoft-outlook-2019--v2.png',
+  '知乎':     'https://static.zhihu.com/heifetz/favicon.ico',
+  'Twitter/X': 'https://img.icons8.com/ios-filled/96/twitterx--v1.png',
+  'Instagram': 'https://img.icons8.com/color/96/instagram-new--v1.png',
+  'Telegram': 'https://img.icons8.com/color/96/telegram-app--v1.png',
+  'ChatGPT Plus': 'https://img.icons8.com/color/96/chatgpt.png',
+  'GitHub Copilot': 'https://github.githubassets.com/favicons/favicon-dark.svg',
+  'WPS会员':  'https://img.icons8.com/color/96/wps-office.png',
+  'Adobe':    'https://img.icons8.com/color/96/adobe.png',
+  'Xbox Game Pass': 'https://img.icons8.com/color/96/xbox.png',
+  'PS Plus':  'https://img.icons8.com/color/96/play-station.png',
+  'iCloud':   'https://img.icons8.com/color/96/icloud.png',
+  'Apple Music': 'https://img.icons8.com/color/96/apple-music.png',
+  'B站大会员': 'https://img.icons8.com/color/96/bilibili.png',
+  '优酷':     'https://img.icons8.com/color/96/youku.png',
 }
 
-// 订阅管理 - 常用服务
-const subscriptionIcons = passwordIcons
-
-// 分类默认图标
-const categoryIcons = {
-  '社交': { letter: '💬', bg: '#007AFF' },
-  '购物': { letter: '🛍', bg: '#FF9500' },
-  '金融': { letter: '¥',  bg: '#34C759' },
-  '工作': { letter: '✦',  bg: '#5856D6' },
-  '游戏': { letter: '▶',  bg: '#FF2D55' },
-  '其他': { letter: '•',  bg: '#8E8E93' },
+// 品牌色兜底（Logo加载失败时显示）
+const brandColors = {
+  '微信': '#07C160', 'QQ': '#12B7F5', '微博': '#E6162D', '小红书': '#FE2C55',
+  '抖音': '#000000', 'GitHub': '#24292F', '淘宝': '#FF5000', '京东': '#E4002B',
+  '拼多多': '#E02E24', '支付宝': '#1677FF', '网易云音乐': '#C20C0C', 'QQ音乐': '#31C27C',
+  'Spotify': '#1DB954', 'Apple': '#000000', '腾讯视频': '#FF7701', '爱奇艺': '#00BE06',
+  'B站': '#FB7299', 'Netflix': '#E50914', 'Steam': '#1B2838', 'Epic': '#000000',
+  '美团': '#FFD100', '饿了么': '#0097FF', '百度': '#2932E1', '钉钉': '#3296FA',
+  '飞书': '#3370FF', 'Gmail': '#EA4335', 'Outlook': '#0078D4', '知乎': '#0066FF',
+  'Twitter/X': '#000000', 'Instagram': '#E4405F', 'Telegram': '#0088CC',
+  'ChatGPT Plus': '#10A37F', 'GitHub Copilot': '#000000', 'WPS会员': '#D4451A',
+  'Adobe': '#FF0000', 'Xbox Game Pass': '#107C10', 'PS Plus': '#003087', 'iCloud': '#3693F5',
+  'Apple Music': '#FC3C44', 'B站大会员': '#FB7299', '优酷': '#1EBEA5',
 }
 
-// 通用图标列表（用于自定义选择）
+// 首字母兜底
+const brandLetters = {
+  '微信': 'W', 'QQ': 'Q', '微博': '微', '小红书': '红', '抖音': 'D',
+  'GitHub': 'G', '淘宝': '淘', '京东': 'J', '拼多多': '拼', '支付宝': 'A',
+  '网易云音乐': '♪', 'QQ音乐': '♫', 'Spotify': 'S', 'Apple': 'A',
+  '腾讯视频': 'V', '爱奇艺': 'iQ', 'B站': 'B', 'Netflix': 'N',
+  'Steam': 'S', 'Epic': 'E', '美团': '美', '饿了么': '饿', '百度': 'B',
+  '钉钉': 'D', '飞书': 'F', 'Gmail': 'G', 'Outlook': 'O', '知乎': '知',
+  'Twitter/X': '𝕏', 'Instagram': 'I', 'Telegram': 'T',
+  'ChatGPT Plus': 'G', 'GitHub Copilot': 'C', 'WPS会员': 'W',
+  'Adobe': 'A', 'Xbox Game Pass': 'X', 'PS Plus': 'P', 'iCloud': '☁',
+  'Apple Music': '♪', 'B站大会员': 'B', '优酷': '优',
+}
+
+// 通用图标列表（自定义选择用）
 const iconList = [
   { letter: '🔑', bg: '#007AFF', name: '钥匙' },
   { letter: '🔒', bg: '#FF9500', name: '锁' },
-  { letter: '☁',  bg: '#3693F5', name: '云' },
-  { letter: '♪',  bg: '#C20C0C', name: '音乐' },
-  { letter: '▶',  bg: '#FF2D55', name: '播放' },
-  { letter: '✦',  bg: '#5856D6', name: '星' },
-  { letter: '⚡',  bg: '#FF9500', name: '闪电' },
-  { letter: '$',  bg: '#34C759', name: '美元' },
-  { letter: '¥',  bg: '#34C759', name: '人民币' },
-  { letter: '✉',  bg: '#007AFF', name: '邮件' },
-  { letter: '⚙',  bg: '#8E8E93', name: '设置' },
-  { letter: '♥',  bg: '#FF2D55', name: '心' },
-  { letter: '★',  bg: '#FF9500', name: '收藏' },
-  { letter: '◆',  bg: '#000000', name: '菱形' },
-  { letter: '●',  bg: '#007AFF', name: '圆点' },
-  { letter: '■',  bg: '#5856D6', name: '方块' },
+  { letter: '☁', bg: '#3693F5', name: '云' },
+  { letter: '♪', bg: '#C20C0C', name: '音乐' },
+  { letter: '▶', bg: '#FF2D55', name: '播放' },
+  { letter: '✦', bg: '#5856D6', name: '星' },
+  { letter: '⚡', bg: '#FF9500', name: '闪电' },
+  { letter: '$', bg: '#34C759', name: '美元' },
+  { letter: '¥', bg: '#34C759', name: '人民币' },
+  { letter: '✉', bg: '#007AFF', name: '邮件' },
+  { letter: '⚙', bg: '#8E8E93', name: '设置' },
+  { letter: '♥', bg: '#FF2D55', name: '心' },
+  { letter: '★', bg: '#FF9500', name: '收藏' },
+  { letter: '●', bg: '#007AFF', name: '圆点' },
 ]
 
 /**
- * 根据平台名获取图标配置
- * @param {string} name 平台名称
- * @returns {{ letter: string, bg: string, textColor?: string }}
+ * 根据平台名获取图标信息
  */
 function getIconByName(name) {
-  if (!name) return { letter: '?', bg: '#8E8E93' }
-  
+  if (!name) return { logo: '', letter: '?', bg: '#8E8E93' }
+
   // 精确匹配
-  if (passwordIcons[name]) return passwordIcons[name]
-  
+  if (logoUrls[name]) {
+    return { logo: logoUrls[name], letter: brandLetters[name] || name[0], bg: brandColors[name] || '#8E8E93' }
+  }
+
   // 模糊匹配
-  const lowerName = name.toLowerCase()
-  for (const [key, icon] of Object.entries(passwordIcons)) {
-    if (lowerName.includes(key.toLowerCase()) || key.toLowerCase().includes(lowerName)) {
-      return icon
+  const lower = name.toLowerCase()
+  for (const [key, url] of Object.entries(logoUrls)) {
+    if (lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+      return { logo: url, letter: brandLetters[key] || key[0], bg: brandColors[key] || '#8E8E93' }
     }
   }
-  
-  // 默认：取首字母 + 随机品牌色
-  const colors = ['#007AFF', '#34C759', '#FF9500', '#FF2D55', '#5856D6', '#00C7BE', '#FF6482']
-  const hash = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return {
-    letter: name.charAt(0).toUpperCase(),
-    bg: colors[hash % colors.length]
-  }
+
+  // 默认：首字母 + 随机色
+  const colors = ['#007AFF', '#34C759', '#FF9500', '#FF2D55', '#5856D6', '#00C7BE']
+  const hash = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  return { logo: '', letter: name[0].toUpperCase(), bg: colors[hash % colors.length] }
 }
 
-module.exports = {
-  passwordIcons,
-  subscriptionIcons,
-  categoryIcons,
-  iconList,
-  getIconByName
-}
+module.exports = { logoUrls, brandColors, brandLetters, iconList, getIconByName }

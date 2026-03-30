@@ -24,14 +24,14 @@ Page({
       return
     }
     
-    const icon = item.iconLetter ? { letter: item.iconLetter, bg: item.iconBg, textColor: item.iconTextColor } : getIconByName(item.platform)
+    const icon = item.iconLogo ? { logo: item.iconLogo, letter: item.iconLetter, bg: item.iconBg } : getIconByName(item.platform)
     
     this.setData({
       item: {
         ...item,
+        brandLogo: icon.logo || '',
         brandLetter: icon.letter,
         brandBg: icon.bg,
-        brandTextColor: icon.textColor || '#fff',
         createdAtDisplay: formatDate(item.createdAt, 'YYYY-MM-DD HH:mm'),
         updatedAtDisplay: formatDate(item.updatedAt, 'YYYY-MM-DD HH:mm')
       },

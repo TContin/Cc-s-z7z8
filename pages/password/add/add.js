@@ -14,7 +14,7 @@ Page({
     category: '其他',
     iconLetter: '?',
     iconBg: '#007AFF',
-    iconTextColor: '#fff',
+    iconLogo: '',
     categories: ['社交', '购物', '金融', '工作', '游戏', '其他'],
     categoryIndex: 5,
     templates: [],
@@ -25,13 +25,12 @@ Page({
   },
 
   onLoad(options) {
-    // 生成模板（带品牌图标）
     const names = ['微信','QQ','微博','小红书','抖音','GitHub','淘宝','京东','拼多多','支付宝','网易云音乐','QQ音乐','Spotify','Apple','腾讯视频','爱奇艺','B站','Netflix','Steam','Epic','美团','饿了么','百度','钉钉','飞书','Gmail','Outlook','知乎','Twitter/X','Instagram','Telegram']
     const catMap = {'微信':'社交','QQ':'社交','微博':'社交','小红书':'社交','抖音':'社交','GitHub':'工作','淘宝':'购物','京东':'购物','拼多多':'购物','支付宝':'金融','网易云音乐':'其他','QQ音乐':'其他','Spotify':'其他','Apple':'其他','腾讯视频':'其他','爱奇艺':'其他','B站':'其他','Netflix':'其他','Steam':'游戏','Epic':'游戏','美团':'购物','饿了么':'购物','百度':'其他','钉钉':'工作','飞书':'工作','Gmail':'工作','Outlook':'工作','知乎':'社交','Twitter/X':'社交','Instagram':'社交','Telegram':'社交'}
 
     const templates = names.map(name => {
       const icon = getIconByName(name)
-      return { name, letter: icon.letter, bg: icon.bg, textColor: icon.textColor || '#fff', category: catMap[name] || '其他' }
+      return { name, logo: icon.logo, letter: icon.letter, bg: icon.bg, category: catMap[name] || '其他' }
     })
 
     this.setData({ templates, customIcons: iconList })
@@ -53,7 +52,7 @@ Page({
 
     const { decrypt: dec } = require('../../../utils/crypto')
     const categoryIndex = this.data.categories.indexOf(item.category)
-    const icon = item.iconLetter ? { letter: item.iconLetter, bg: item.iconBg } : getIconByName(item.platform)
+    const icon = item.iconLogo ? { logo: item.iconLogo, letter: item.iconLetter, bg: item.iconBg } : getIconByName(item.platform)
 
     this.setData({
       platform: item.platform || '',
@@ -65,7 +64,7 @@ Page({
       categoryIndex: categoryIndex >= 0 ? categoryIndex : 5,
       iconLetter: icon.letter,
       iconBg: icon.bg,
-      iconTextColor: icon.textColor || '#fff'
+      iconLogo: icon.logo || ''
     })
 
     wx.setNavigationBarTitle({ title: '编辑密码' })
@@ -94,7 +93,7 @@ Page({
 
   onIconSelect(e) {
     const { letter, bg } = e.currentTarget.dataset
-    this.setData({ iconLetter: letter, iconBg: bg, iconTextColor: '#fff', showIconPicker: false })
+    this.setData({ iconLetter: letter, iconBg: bg, iconLogo: '', showIconPicker: false })
   },
 
   toggleTemplates() {
@@ -108,7 +107,7 @@ Page({
       platform: tpl.name,
       iconLetter: tpl.letter,
       iconBg: tpl.bg,
-      iconTextColor: tpl.textColor || '#fff',
+      iconLogo: tpl.logo || '',
       category: tpl.category,
       categoryIndex: categoryIndex >= 0 ? categoryIndex : 5,
       showTemplates: false
@@ -126,7 +125,7 @@ Page({
   },
 
   onSave() {
-    const { platform, account, password, website, remark, category, iconLetter, iconBg, iconTextColor, isEdit, id } = this.data
+    const { platform, account, password, website, remark, category, iconLetter, iconBg, iconLogo, isEdit, id } = this.data
 
     if (!platform.trim()) {
       showToast('请输入平台名称')
@@ -149,9 +148,7 @@ Page({
       website: website.trim(),
       remark: remark.trim(),
       category,
-      iconLetter,
-      iconBg,
-      iconTextColor: iconTextColor || '#fff',
+      iconLetter, iconBg, iconLogo: iconLogo || '',
       createdAt: isEdit ? undefined : new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }

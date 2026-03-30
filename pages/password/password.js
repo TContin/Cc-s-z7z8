@@ -57,14 +57,14 @@ Page({
     const list = getData('passwords', [])
     // 解密显示名称（密码字段保持加密）
     const displayList = list.map(item => {
-      const icon = item.iconLetter ? { letter: item.iconLetter, bg: item.iconBg, textColor: item.iconTextColor } : getIconByName(item.platform)
+      const icon = item.iconLogo ? { logo: item.iconLogo, letter: item.iconLetter, bg: item.iconBg } : getIconByName(item.platform)
       return {
         ...item,
         displayName: item.platform || '未命名',
         displayAccount: item.account || '',
+        brandLogo: icon.logo || '',
         brandLetter: icon.letter,
-        brandBg: icon.bg,
-        brandTextColor: icon.textColor || '#fff'
+        brandBg: icon.bg
       }
     })
     
