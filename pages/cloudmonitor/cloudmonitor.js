@@ -9,9 +9,13 @@ Page({
     lastUpdate: '',
     balance: null,
     instances: [],
+    monitor: null,
     domains: [],
     certificates: [],
-    errors: null
+    errors: null,
+    // 圆环数据
+    trafficRing: { percent: 0, used: '0', total: '0', resetTime: '' },
+    diskRing: { percent: 0, used: '0', total: '0' }
   },
 
   onLoad() {
@@ -61,12 +65,32 @@ Page({
 
       if (res.success && res.data) {
         const d = res.data
+        const inst0 = d.instances && d.instances[0]
+
+        // 流量圆环
+        const trafficRing = inst0 ? {
+          percent: parseFloat(inst0.trafficPercent) || 0,
+          used: inst0.trafficUsedMB + ' MB',
+          total: inst0.trafficTotalGB + 'GB',
+          resetTime: inst0.trafficResetTime ? inst0.trafficResetTime.substring(0, 19).replace('T', ' ') : ''
+        } : this.data.trafficRing
+
+        // 系统盘圆环（从监控暂不可用时用磁盘总量占位）
+        const diskRing = inst0 ? {
+          percent: 0,
+          used: '--',
+          total: inst0.diskSize + 'GB'
+        } : this.data.diskRing
+
         this.setData({
           balance: d.balance,
           instances: d.instances || [],
+          monitor: d.monitor || null,
           domains: this.processDomains(d.domains || []),
           certificates: this.processCerts(d.certificates || []),
           errors: d.errors,
+          trafficRing,
+          diskRing,
           loading: false,
           refreshing: false,
           lastUpdate: formatDate(new Date(), 'HH:mm')
@@ -90,8 +114,8 @@ Page({
       let statusType = 'success'
       let statusText = days + '天'
       if (days < 0) { statusType = 'danger'; statusText = '已过期' }
-      else if (days <= 30) { statusType = 'danger' }
-      else if (days <= 90) { statusType = 'warning' }
+      else if (days <= 30) statusType = 'danger'
+      else if (days <= 90) statusType = 'warning'
       return { ...d, daysLeft: days, statusType, statusText }
     }).sort((a, b) => a.daysLeft - b.daysLeft)
   },
@@ -104,21 +128,10 @@ Page({
       let statusType = 'success'
       let statusText = days + '天'
       if (days < 0) { statusType = 'danger'; statusText = '已过期' }
-      else if (days <= 30) { statusType = 'danger' }
-      else if (days <= 90) { statusType = 'warning' }
+      else if (days <= 30) statusType = 'danger'
+      else if (days <= 90) statusType = 'warning'
       return { ...c, daysLeft: days, statusType, statusText }
     }).sort((a, b) => a.daysLeft - b.daysLeft)
-  },
-
-  getInstanceStatusText(status) {
-    const map = {
-      'PENDING': '创建中', 'LAUNCH_FAILED': '创建失败',
-      'RUNNING': '运行中', 'STOPPED': '已关机',
-      'STARTING': '开机中', 'STOPPING': '关机中',
-      'REBOOTING': '重启中', 'SHUTDOWN': '待回收',
-      'TERMINATING': '销毁中'
-    }
-    return map[status] || status
   },
 
   async onRefresh() {

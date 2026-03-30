@@ -28,66 +28,132 @@
       <view class="balance-card" wx:if="{{balance}}">
         <view class="bal-top">
           <text class="bal-label">账户余额</text>
-          <text class="bal-amount {{balance.total < 10 ? 'danger' : ''}}">¥{{balance.total}}</text>
+          <text class="bal-amount {{balance.total < 10 ? 'low' : ''}}">¥{{balance.total}}</text>
         </view>
         <view class="bal-detail">
-          <view class="bal-item">
-            <text class="bal-item-val">¥{{balance.cash}}</text>
-            <text class="bal-item-label">现金</text>
-          </view>
-          <view class="bal-item">
-            <text class="bal-item-val">¥{{balance.gift}}</text>
-            <text class="bal-item-label">赠送</text>
-          </view>
-          <view class="bal-item">
-            <text class="bal-item-val">¥{{balance.frozen}}</text>
-            <text class="bal-item-label">冻结</text>
-          </view>
-          <view class="bal-item" wx:if="{{balance.owe !== '0.00'}}">
-            <text class="bal-item-val danger">¥{{balance.owe}}</text>
-            <text class="bal-item-label">欠费</text>
-          </view>
+          <view class="bal-item"><text class="bal-item-val">¥{{balance.cash}}</text><text class="bal-item-label">现金</text></view>
+          <view class="bal-item"><text class="bal-item-val">¥{{balance.gift}}</text><text class="bal-item-label">赠送</text></view>
+          <view class="bal-item"><text class="bal-item-val">¥{{balance.frozen}}</text><text class="bal-item-label">冻结</text></view>
+          <view class="bal-item" wx:if="{{balance.owe !== '0.00'}}"><text class="bal-item-val low">¥{{balance.owe}}</text><text class="bal-item-label">欠费</text></view>
         </view>
       </view>
 
-      <!-- ===== 轻量服务器 ===== -->
-      <view class="section-title" wx:if="{{instances.length > 0}}">轻量应用服务器</view>
-      <view class="ios-group" wx:if="{{instances.length > 0}}">
-        <view class="inst-item" wx:for="{{instances}}" wx:key="id">
-          <view class="inst-header">
-            <view class="inst-name-row">
-              <text class="inst-name">{{item.name || item.id}}</text>
-              <text class="tag {{item.status === 'RUNNING' ? 'tag-success' : item.status === 'STOPPED' ? 'tag-danger' : 'tag-warning'}}">
-                {{item.status === 'RUNNING' ? '运行中' : item.status === 'STOPPED' ? '已关机' : item.status}}
+      <!-- ===== 用量与监控 (仿腾讯云) ===== -->
+      <block wx:if="{{instances.length > 0}}">
+        <view class="monitor-card">
+          <view class="monitor-header">
+            <text class="monitor-title">用量与监控</text>
+            <view class="inst-tag">
+              <text class="tag {{instances[0].status === 'RUNNING' ? 'tag-success' : 'tag-danger'}}">
+                {{instances[0].status === 'RUNNING' ? '运行中' : instances[0].status}}
               </text>
             </view>
-            <text class="inst-ip">{{item.publicIp}}</text>
           </view>
 
-          <view class="inst-specs">
-            <text class="spec">{{item.cpu}}核</text>
-            <text class="spec-sep">·</text>
-            <text class="spec">{{item.memory}}GB</text>
-            <text class="spec-sep">·</text>
-            <text class="spec">{{item.disk}}GB</text>
-            <text class="spec-sep">·</text>
-            <text class="spec">{{item.bandwidth}}Mbps</text>
+          <!-- 服务器基本信息 -->
+          <view class="inst-info-row">
+            <text class="inst-info-name">{{instances[0].name}}</text>
+            <text class="inst-info-ip">{{instances[0].publicIp}}</text>
           </view>
 
-          <!-- 流量使用 -->
-          <view class="traffic-row" wx:if="{{item.trafficTotalGB > 0}}">
-            <view class="traffic-bar-bg">
-              <view class="traffic-bar-fill {{item.trafficPercent > 80 ? 'danger' : item.trafficPercent > 60 ? 'warning' : ''}}" style="width: {{item.trafficPercent}}%"></view>
+          <!-- 指标网格 6列 -->
+          <view class="metric-grid">
+            <!-- 流量包（圆环） -->
+            <view class="metric-cell ring-cell">
+              <text class="metric-label">流量包</text>
+              <view class="ring-wrap">
+                <view class="ring" style="background: conic-gradient(var(--primary) {{trafficRing.percent * 3.6}}deg, #F0F0F0 0deg);">
+                  <view class="ring-inner">
+                    <text class="ring-pct">{{trafficRing.percent}}%</text>
+                  </view>
+                </view>
+              </view>
+              <text class="metric-big">{{trafficRing.used}}</text>
+              <text class="metric-sub">/{{trafficRing.total}}</text>
             </view>
-            <text class="traffic-text">{{item.trafficUsedGB}} / {{item.trafficTotalGB}} GB ({{item.trafficPercent}}%)</text>
+
+            <!-- 系统盘（圆环） -->
+            <view class="metric-cell ring-cell">
+              <text class="metric-label">系统盘</text>
+              <view class="ring-wrap">
+                <view class="ring" style="background: conic-gradient(var(--success) {{diskRing.percent * 3.6}}deg, #F0F0F0 0deg);">
+                  <view class="ring-inner">
+                    <text class="ring-pct">{{diskRing.percent > 0 ? diskRing.percent + '%' : '--'}}</text>
+                  </view>
+                </view>
+              </view>
+              <text class="metric-big">{{diskRing.used}}</text>
+              <text class="metric-sub">/{{diskRing.total}}</text>
+            </view>
+
+            <!-- CPU -->
+            <view class="metric-cell">
+              <text class="metric-label">CPU | {{instances[0].cpu}}核</text>
+              <text class="metric-big">{{monitor.cpuPercent || '--'}}<text class="metric-unit"> %</text></text>
+              <view class="mini-bar"><view class="mini-bar-fill" style="width: {{monitor.cpuPercent || 0}}%"></view></view>
+            </view>
+
+            <!-- 内存 -->
+            <view class="metric-cell">
+              <text class="metric-label">内存 | {{instances[0].memory}}GB</text>
+              <text class="metric-big">{{monitor.memUsedMB || '--'}}<text class="metric-unit"> MB</text></text>
+              <view class="mini-bar"><view class="mini-bar-fill mem" style="width: {{monitor.memPercent || 0}}%"></view></view>
+            </view>
+
+            <!-- 公网带宽 -->
+            <view class="metric-cell">
+              <text class="metric-label">公网带宽</text>
+              <view class="bw-row">
+                <text class="bw-dir">入</text>
+                <text class="bw-val">{{monitor.bandwidthInMbps || '0'}} Mbps</text>
+              </view>
+              <view class="bw-row">
+                <text class="bw-dir">出</text>
+                <text class="bw-val">{{monitor.bandwidthOutMbps || '0'}} Mbps</text>
+              </view>
+            </view>
+
+            <!-- 系统盘 IO -->
+            <view class="metric-cell">
+              <text class="metric-label">系统盘 IO</text>
+              <view class="bw-row">
+                <text class="bw-dir">读</text>
+                <text class="bw-val">{{monitor.diskReadKBs || '0'}} KB/s</text>
+              </view>
+              <view class="bw-row">
+                <text class="bw-dir">写</text>
+                <text class="bw-val">{{monitor.diskWriteKBs || '0'}} KB/s</text>
+              </view>
+            </view>
           </view>
 
-          <view class="inst-footer">
-            <text class="inst-os">{{item.os}}</text>
-            <text class="inst-expire">到期 {{item.expiredTime}}</text>
+          <!-- 到期/流量重置 -->
+          <view class="monitor-footer">
+            <text class="footer-text" wx:if="{{trafficRing.resetTime}}">流量包重置: {{trafficRing.resetTime}}</text>
+            <text class="footer-text">到期: {{instances[0].expiredTime}}</text>
           </view>
         </view>
-      </view>
+      </block>
+
+      <!-- ===== 多台服务器列表（第2台起） ===== -->
+      <block wx:if="{{instances.length > 1}}">
+        <view class="section-title">其他服务器</view>
+        <view class="ios-group">
+          <view class="inst-item" wx:for="{{instances}}" wx:if="{{index > 0}}" wx:key="id">
+            <view class="inst-row">
+              <text class="inst-name2">{{item.name}}</text>
+              <text class="tag {{item.status === 'RUNNING' ? 'tag-success' : 'tag-danger'}}">{{item.status === 'RUNNING' ? '运行中' : item.status}}</text>
+            </view>
+            <view class="inst-row">
+              <text class="inst-spec2">{{item.publicIp}} · {{item.cpu}}核{{item.memory}}G · {{item.diskSize}}GB</text>
+            </view>
+            <view class="inst-row">
+              <text class="inst-expire2">到期 {{item.expiredTime}}</text>
+              <text class="inst-traffic2" wx:if="{{item.trafficTotalGB > 0}}">流量 {{item.trafficPercent}}%</text>
+            </view>
+          </view>
+        </view>
+      </block>
 
       <!-- ===== 域名 ===== -->
       <view class="section-title" wx:if="{{domains.length > 0}}">域名（{{domains.length}}个）</view>
@@ -113,14 +179,14 @@
         </view>
       </view>
 
-      <!-- ===== 错误提示 ===== -->
+      <!-- 错误提示 -->
       <view class="error-card" wx:if="{{errors && (errors.instances || errors.domains || errors.certificates || errors.balance)}}">
         <text class="error-title">部分数据获取失败</text>
         <text class="error-text" wx:if="{{errors.instances}}">服务器: {{errors.instances}}</text>
         <text class="error-text" wx:if="{{errors.domains}}">域名: {{errors.domains}}</text>
         <text class="error-text" wx:if="{{errors.certificates}}">证书: {{errors.certificates}}</text>
         <text class="error-text" wx:if="{{errors.balance}}">余额: {{errors.balance}}</text>
-        <text class="error-hint">请检查 API 密钥权限是否包含对应产品</text>
+        <text class="error-hint">请检查 API 密钥权限</text>
       </view>
 
       <view class="no-data" wx:if="{{!balance && instances.length === 0 && domains.length === 0 && certificates.length === 0}}">

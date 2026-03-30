@@ -228,16 +228,61 @@ exports.main = async (event) => {
       // 轻量服务器
       const instances = (instancesRes.Response && !instancesRes.Response.Error && instancesRes.Response.InstanceSet) || []
 
-      // 流量包（为每台服务器查询）
+      // 流量包 + 系统盘 + 实时监控（并行查询）
       let trafficData = []
+      let diskData = []
+      let monitorMap = {}
+
       if (instances.length > 0) {
-        try {
-          const trafficRes = await tcApiRequest(secretId, secretKey, 'lighthouse', 'DescribeInstancesTrafficPackages', '2020-03-24', {
-            InstanceIds: instances.map(i => i.InstanceId)
-          }, region)
-          trafficData = (trafficRes.Response && trafficRes.Response.InstanceTrafficPackageSet) || []
-        } catch (e) {
-          console.error('流量包查询失败:', e.message)
+        const instIds = instances.map(i => i.InstanceId)
+        const now = new Date()
+        const startTime = new Date(now.getTime() - 10 * 60 * 1000).toISOString()
+        const endTime = now.toISOString()
+
+        // 监控指标列表
+        const metrics = ['CpuLoadPercent', 'MemUsage', 'LanOuttraffic', 'LanIntraffic', 'DiskReadIops', 'DiskWriteIops']
+
+        const parallelTasks = [
+          // 流量包
+          tcApiRequest(secretId, secretKey, 'lighthouse', 'DescribeInstancesTrafficPackages', '2020-03-24', {
+            InstanceIds: instIds
+          }, region).catch(e => ({ Response: { Error: { Message: e.message } } })),
+          // 系统盘
+          tcApiRequest(secretId, secretKey, 'lighthouse', 'DescribeInstancesDiskNum', '2020-03-24', {
+            InstanceIds: instIds
+          }, region).catch(e => null)
+        ]
+
+        // 为第一台服务器查实时监控（避免太多请求）
+        const mainInstId = instIds[0]
+        for (const metric of metrics) {
+          parallelTasks.push(
+            tcApiRequest(secretId, secretKey, 'monitor', 'GetMonitorData', '2018-07-24', {
+              Namespace: 'QCE/LIGHTHOUSE',
+              MetricName: metric,
+              Period: 60,
+              StartTime: startTime,
+              EndTime: endTime,
+              Instances: [{ Dimensions: [{ Name: 'InstanceId', Value: mainInstId }] }]
+            }, region).catch(e => null)
+          )
+        }
+
+        const results = await Promise.all(parallelTasks)
+
+        // 解析流量包
+        const trafficRes = results[0]
+        trafficData = (trafficRes && trafficRes.Response && trafficRes.Response.InstanceTrafficPackageSet) || []
+
+        // 解析实时监控
+        for (let i = 0; i < metrics.length; i++) {
+          const mRes = results[2 + i]
+          if (mRes && mRes.Response && mRes.Response.DataPoints && mRes.Response.DataPoints.length > 0) {
+            const dp = mRes.Response.DataPoints[0]
+            const values = dp.Values || []
+            const lastVal = values.length > 0 ? values[values.length - 1] : null
+            monitorMap[metrics[i]] = lastVal
+          }
         }
       }
 
@@ -254,7 +299,6 @@ exports.main = async (event) => {
         success: true,
         data: {
           instances: instances.map(inst => {
-            // 匹配流量包
             const tp = trafficData.find(t => t.InstanceId === inst.InstanceId)
             const trafficPkgs = (tp && tp.TrafficPackageSet) || []
             let trafficUsed = 0, trafficTotal = 0
@@ -265,6 +309,12 @@ exports.main = async (event) => {
               }
             })
 
+            // 流量包重置时间
+            let trafficResetTime = ''
+            if (trafficPkgs.length > 0 && trafficPkgs[0].TrafficPackageRemaining != null) {
+              trafficResetTime = trafficPkgs[0].Deadline || ''
+            }
+
             return {
               id: inst.InstanceId,
               name: inst.InstanceName,
@@ -273,17 +323,29 @@ exports.main = async (event) => {
               publicIp: (inst.PublicAddresses && inst.PublicAddresses[0]) || '',
               cpu: inst.CPU,
               memory: inst.Memory,
-              disk: inst.SystemDisk ? inst.SystemDisk.DiskSize : 0,
+              diskSize: inst.SystemDisk ? inst.SystemDisk.DiskSize : 0,
               bandwidth: inst.InternetAccessible ? inst.InternetAccessible.InternetMaxBandwidthOut : 0,
               expiredTime: inst.ExpiredTime,
               createdTime: inst.CreatedTime,
               zone: inst.Zone,
-              // 流量 (字节转GB)
-              trafficUsedGB: (trafficUsed / 1073741824).toFixed(2),
+              trafficUsedMB: (trafficUsed / 1048576).toFixed(1),
               trafficTotalGB: (trafficTotal / 1073741824).toFixed(0),
-              trafficPercent: trafficTotal > 0 ? Math.round((trafficUsed / trafficTotal) * 100) : 0
+              trafficPercent: trafficTotal > 0 ? ((trafficUsed / trafficTotal) * 100).toFixed(2) : '0',
+              trafficResetTime
             }
           }),
+          // 实时监控（主服务器）
+          monitor: {
+            cpuPercent: monitorMap['CpuLoadPercent'] != null ? Number(monitorMap['CpuLoadPercent']).toFixed(3) : null,
+            memPercent: monitorMap['MemUsage'] != null ? Number(monitorMap['MemUsage']).toFixed(0) : null,
+            memUsedMB: monitorMap['MemUsage'] != null && instances.length > 0
+              ? (instances[0].Memory * 1024 * Number(monitorMap['MemUsage']) / 100).toFixed(0)
+              : null,
+            bandwidthInMbps: monitorMap['LanIntraffic'] != null ? Number(monitorMap['LanIntraffic']).toFixed(3) : null,
+            bandwidthOutMbps: monitorMap['LanOuttraffic'] != null ? Number(monitorMap['LanOuttraffic']).toFixed(3) : null,
+            diskReadKBs: monitorMap['DiskReadIops'] != null ? Number(monitorMap['DiskReadIops']).toFixed(3) : null,
+            diskWriteKBs: monitorMap['DiskWriteIops'] != null ? Number(monitorMap['DiskWriteIops']).toFixed(3) : null
+          },
           domains: domains.map(d => ({
             name: d.DomainName,
             status: d.Status,

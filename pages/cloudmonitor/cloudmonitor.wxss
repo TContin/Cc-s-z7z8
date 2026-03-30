@@ -14,7 +14,7 @@
 .loading-state { text-align: center; padding: 120rpx 0; }
 .loading-text { font-size: 28rpx; color: var(--text-hint); }
 
-/* 余额卡片 */
+/* ===== 余额卡片 ===== */
 .balance-card {
   background: linear-gradient(135deg, #007AFF 0%, #409CFF 100%);
   border-radius: var(--radius);
@@ -25,41 +25,182 @@
 .bal-top { margin-bottom: 20rpx; }
 .bal-label { font-size: 24rpx; opacity: 0.8; display: block; margin-bottom: 8rpx; }
 .bal-amount { font-size: 56rpx; font-weight: 700; display: block; }
-.bal-amount.danger { color: #FFD1D1; }
+.bal-amount.low { color: #FFD1D1; }
 .bal-detail { display: flex; gap: 24rpx; }
 .bal-item { display: flex; flex-direction: column; }
 .bal-item-val { font-size: 28rpx; font-weight: 600; }
-.bal-item-val.danger { color: #FFD1D1; }
+.bal-item-val.low { color: #FFD1D1; }
 .bal-item-label { font-size: 20rpx; opacity: 0.7; margin-top: 2rpx; }
 
-/* iOS 分组 */
+/* ===== 监控卡片（仿腾讯云） ===== */
+.monitor-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 28rpx;
+  margin-bottom: 16rpx;
+}
+
+.monitor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+.monitor-title { font-size: 30rpx; font-weight: 700; color: var(--text-primary); }
+
+.inst-info-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+.inst-info-name { font-size: 26rpx; color: var(--text-secondary); font-weight: 500; }
+.inst-info-ip { font-size: 24rpx; color: var(--text-hint); font-family: monospace; }
+
+/* 6列指标网格 */
+.metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16rpx;
+}
+
+.metric-cell {
+  background: var(--bg-grouped);
+  border-radius: 16rpx;
+  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 22rpx;
+  color: var(--text-hint);
+  margin-bottom: 8rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metric-big {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.metric-unit {
+  font-size: 22rpx;
+  font-weight: 400;
+  color: var(--text-hint);
+}
+
+.metric-sub {
+  font-size: 20rpx;
+  color: var(--text-hint);
+  margin-top: 2rpx;
+}
+
+/* 圆环 */
+.ring-cell {
+  align-items: center;
+}
+
+.ring-wrap {
+  margin: 8rpx 0;
+}
+
+.ring {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-inner {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: var(--bg-grouped);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-pct {
+  font-size: 20rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* 迷你进度条 */
+.mini-bar {
+  width: 100%;
+  height: 8rpx;
+  background: rgba(0,0,0,0.06);
+  border-radius: 4rpx;
+  margin-top: 10rpx;
+  overflow: hidden;
+}
+
+.mini-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 4rpx;
+  transition: width 0.3s;
+  min-width: 2rpx;
+}
+
+.mini-bar-fill.mem {
+  background: var(--success);
+}
+
+/* 带宽/IO 行 */
+.bw-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 6rpx;
+}
+
+.bw-dir {
+  font-size: 20rpx;
+  color: var(--text-hint);
+  width: 24rpx;
+}
+
+.bw-val {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.monitor-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid var(--separator);
+}
+
+.footer-text {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}
+
+/* ===== iOS 分组 ===== */
 .ios-group { background: var(--bg-card); border-radius: var(--radius); overflow: hidden; margin-bottom: 8rpx; }
 
-/* 服务器卡片 */
-.inst-item { padding: 24rpx 28rpx; position: relative; }
+/* 其他服务器 */
+.inst-item { padding: 20rpx 28rpx; position: relative; }
 .inst-item::after { content: ''; position: absolute; left: 28rpx; right: 0; bottom: 0; height: 1rpx; background: var(--separator); }
 .inst-item:last-child::after { display: none; }
-
-.inst-header { margin-bottom: 8rpx; }
-.inst-name-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4rpx; }
-.inst-name { font-size: 30rpx; font-weight: 600; color: var(--text-primary); }
-.inst-ip { font-size: 24rpx; color: var(--text-hint); font-family: monospace; }
-
-.inst-specs { display: flex; align-items: center; font-size: 24rpx; color: var(--text-secondary); margin-bottom: 10rpx; }
-.spec { font-weight: 500; }
-.spec-sep { margin: 0 8rpx; color: var(--text-hint); }
-
-/* 流量条 */
-.traffic-row { margin-bottom: 10rpx; }
-.traffic-bar-bg { height: 12rpx; background: rgba(0,0,0,0.06); border-radius: 6rpx; overflow: hidden; margin-bottom: 6rpx; }
-.traffic-bar-fill { height: 100%; background: var(--primary); border-radius: 6rpx; transition: width 0.3s; }
-.traffic-bar-fill.warning { background: var(--warning); }
-.traffic-bar-fill.danger { background: var(--danger); }
-.traffic-text { font-size: 22rpx; color: var(--text-hint); }
-
-.inst-footer { display: flex; justify-content: space-between; }
-.inst-os { font-size: 22rpx; color: var(--text-hint); max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.inst-expire { font-size: 22rpx; color: var(--text-hint); }
+.inst-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4rpx; }
+.inst-name2 { font-size: 28rpx; font-weight: 600; color: var(--text-primary); }
+.inst-spec2 { font-size: 24rpx; color: var(--text-hint); }
+.inst-expire2 { font-size: 22rpx; color: var(--text-hint); }
+.inst-traffic2 { font-size: 22rpx; color: var(--primary); }
 
 /* 域名 */
 .domain-item { display: flex; align-items: center; justify-content: space-between; padding: 20rpx 28rpx; position: relative; }
@@ -77,7 +218,7 @@
 .cert-domain { font-size: 28rpx; font-weight: 500; color: var(--text-primary); display: block; }
 .cert-product { font-size: 22rpx; color: var(--text-hint); margin-top: 2rpx; display: block; }
 
-/* 错误提示 */
+/* 错误 */
 .error-card { background: rgba(255,59,48,0.06); border-radius: var(--radius); padding: 24rpx 28rpx; margin-top: 16rpx; }
 .error-title { display: block; font-size: 26rpx; font-weight: 600; color: var(--danger); margin-bottom: 8rpx; }
 .error-text { display: block; font-size: 22rpx; color: var(--text-secondary); line-height: 1.8; }
