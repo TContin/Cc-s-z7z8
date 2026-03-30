@@ -75,12 +75,16 @@ Page({
           resetTime: inst0.trafficResetTime ? inst0.trafficResetTime.substring(0, 19).replace('T', ' ') : ''
         } : this.data.trafficRing
 
-        // 系统盘圆环（从监控暂不可用时用磁盘总量占位）
-        const diskRing = inst0 ? {
-          percent: 0,
-          used: '--',
-          total: inst0.diskSize + 'GB'
-        } : this.data.diskRing
+        // 系统盘圆环
+        const mon = d.monitor || {}
+        const diskTotal = inst0 ? inst0.diskSize : 0
+        const diskPct = mon.diskUsage ? parseFloat(mon.diskUsage) : 0
+        const diskUsedGB = diskTotal > 0 && diskPct > 0 ? (diskTotal * diskPct / 100).toFixed(1) : '--'
+        const diskRing = {
+          percent: diskPct,
+          used: diskUsedGB !== '--' ? diskUsedGB + ' GB' : '--',
+          total: diskTotal + 'GB'
+        }
 
         this.setData({
           balance: d.balance,
