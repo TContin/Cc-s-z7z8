@@ -17,7 +17,7 @@
 
   <!-- 图标预览 -->
   <view class="icon-selector" bindtap="toggleIconPicker">
-    <view class="brand-icon brand-icon-lg" style="background:{{iconBg}}">
+    <view class="brand-icon brand-icon-lg" style="background:{{iconLogo ? '#F2F2F7' : iconBg}}">
       <image wx:if="{{iconLogo}}" class="brand-logo" src="{{iconLogo}}" mode="aspectFit" />
       <text wx:else>{{iconLetter}}</text>
     </view>

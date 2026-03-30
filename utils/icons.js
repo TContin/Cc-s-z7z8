@@ -2,23 +2,20 @@
  * 品牌图标配置 - 使用网络Logo图片 + 品牌色兜底
  */
 
-// Logo 图片 URL 映射
+// Logo 图片 URL 映射（全部使用彩色版本，避免黑色单色图标在白色背景下看不清）
 const logoUrls = {
   '微信':     'https://img.icons8.com/color/96/wechat.png',
   'QQ':       'https://img.icons8.com/color/96/qq.png',
   '微博':     'https://img.icons8.com/color/96/weibo.png',
-  // 小红书 icons8无，走首字母
   '抖音':     'https://img.icons8.com/color/96/tiktok.png',
-  'GitHub':   'https://img.icons8.com/glyph-neue/96/github.png',
+  'GitHub':   'https://img.icons8.com/fluency/96/github.png',
   '淘宝':     'https://img.icons8.com/color/96/taobao.png',
-  // 京东 icons8有jd-com但可能不稳定，保留测试
   '京东':     'https://img.icons8.com/color/96/jd-com.png',
-  // 拼多多、美团、饿了么、钉钉、飞书、知乎 icons8无
   '支付宝':   'https://img.icons8.com/color/96/alipay.png',
   '网易云音乐': 'https://img.icons8.com/color/96/netease-cloud-music.png',
   'QQ音乐':   'https://img.icons8.com/color/96/qq-music.png',
   'Spotify':  'https://img.icons8.com/color/96/spotify.png',
-  'Apple':    'https://img.icons8.com/glyph-neue/96/mac-os.png',
+  'Apple':    'https://img.icons8.com/color/96/mac-os.png',
   '腾讯视频': 'https://img.icons8.com/color/96/tencent-video.png',
   '爱奇艺':   'https://img.icons8.com/color/96/iqiyi.png',
   'B站':      'https://img.icons8.com/color/96/bilibili.png',
@@ -28,11 +25,11 @@ const logoUrls = {
   '百度':     'https://img.icons8.com/color/96/baidu.png',
   'Gmail':    'https://img.icons8.com/color/96/gmail-new.png',
   'Outlook':  'https://img.icons8.com/color/96/microsoft-outlook-2019--v2.png',
-  'Twitter/X': 'https://img.icons8.com/glyph-neue/96/twitterx--v1.png',
+  'Twitter/X': 'https://img.icons8.com/color/96/twitterx--v2.png',
   'Instagram': 'https://img.icons8.com/color/96/instagram-new--v1.png',
   'Telegram': 'https://img.icons8.com/color/96/telegram-app--v1.png',
   'ChatGPT Plus': 'https://img.icons8.com/color/96/chatgpt.png',
-  'GitHub Copilot': 'https://img.icons8.com/glyph-neue/96/github.png',
+  'GitHub Copilot': 'https://img.icons8.com/fluency/96/github.png',
   'WPS会员':  'https://img.icons8.com/color/96/wps-office.png',
   'Adobe':    'https://img.icons8.com/color/96/adobe.png',
   'Xbox Game Pass': 'https://img.icons8.com/color/96/xbox.png',

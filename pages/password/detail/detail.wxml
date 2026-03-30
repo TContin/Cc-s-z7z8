@@ -1,7 +1,7 @@
 <view class="page-detail" wx:if="{{item}}">
   <!-- 头部 -->
   <view class="detail-header">
-    <view class="brand-icon brand-icon-lg" style="background:{{item.brandBg}}">
+    <view class="brand-icon brand-icon-lg" style="background:{{item.brandLogo ? '#F2F2F7' : item.brandBg}}">
       <image wx:if="{{item.brandLogo}}" class="brand-logo" src="{{item.brandLogo}}" mode="aspectFit" />
       <text wx:else>{{item.brandLetter}}</text>
     </view>

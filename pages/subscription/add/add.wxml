@@ -6,7 +6,7 @@
 
   <view class="template-grid" wx:if="{{showTemplates}}">
     <view class="template-item" wx:for="{{templates}}" wx:key="name" data-tpl="{{item}}" bindtap="onTemplateTap">
-      <view class="brand-icon brand-icon-mini">
+      <view class="brand-icon brand-icon-mini" style="background:{{item.logo ? '#F2F2F7' : item.bg}}">
         <image wx:if="{{item.logo}}" class="brand-logo" src="{{item.logo}}" mode="aspectFit" />
         <text wx:else style="color:#fff">{{item.letter}}</text>
       </view>
