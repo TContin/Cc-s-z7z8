@@ -65,14 +65,18 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
 
         log('📨 收到 Push 事件')
 
-        # 拉取最新代码
+        # 拉取最新代码（使用 HTTPS 避免 SSH key 问题）
         log('📥 拉取最新代码...')
-        if not run_cmd('git pull origin main'):
+        if not run_cmd('git pull https://github.com/TContin/Cc-s-z7z8.git main'):
             log('❌ git pull 失败')
             self.send_response(500)
             self.end_headers()
             self.wfile.write(b'git pull failed')
             return
+
+        # 重启 openclaw-api 服务（如果配置文件有变更）
+        log('🔄 重启 openclaw-api...')
+        run_cmd('systemctl restart openclaw-api')
 
         # 上传小程序
         log('📤 上传小程序...')
