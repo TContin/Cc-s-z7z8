@@ -4,7 +4,7 @@ const { decrypt } = require('../../utils/crypto')
 Page({
   data: {
     configured: false,
-    loading: true,
+    loading: false,
     summary: null,
     models: [],
     lastUpdate: '',
@@ -14,7 +14,7 @@ Page({
     cloudLoading: false,
     cloudLastUpdate: '',
     cloudData: {
-      status: '',
+      status: '--',
       diskPercent: 0,
       diskUsed: '--',
       diskTotal: '--',

@@ -27,15 +27,7 @@
   margin-top: 32rpx;
 }
 
-.loading-state {
-  text-align: center;
-  padding: 120rpx 0;
-}
-
-.loading-text {
-  font-size: 28rpx;
-  color: var(--text-hint);
-}
+/* loading-state 已移除，改为卡片内占位模式 */
 
 /* ===== 仪表盘主卡片 ===== */
 .dashboard-card {
@@ -57,6 +49,23 @@
   font-size: 28rpx;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+/* 卡片标题栏加载提示 */
+.card-loading-hint {
+  font-size: 22rpx;
+  color: var(--text-hint);
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+.cloud-status-wrap {
+  display: flex;
+  align-items: center;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .dash-row {
@@ -223,10 +232,7 @@
   background: rgba(52, 199, 89, 0.1);
 }
 
-.cloud-loading {
-  text-align: center;
-  padding: 40rpx 0;
-}
+/* cloud-loading 已移除，改为卡片内占位模式 */
 
 .cloud-row {
   display: flex;

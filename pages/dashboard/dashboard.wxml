@@ -14,20 +14,15 @@
   </view>
 
   <block wx:else>
-    <!-- 加载中 -->
-    <view class="loading-state" wx:if="{{loading}}">
-      <text class="loading-text">加载中...</text>
-    </view>
-
-    <block wx:else>
       <!-- ===== API 监控仪表盘 ===== -->
       <view class="dashboard-card" bindtap="goApiMonitor">
         <!-- 标题头 -->
         <view class="card-header">
           <text class="card-title">API 监控</text>
+          <text class="card-loading-hint" wx:if="{{loading}}">加载中...</text>
         </view>
 
-        <!-- 三个 Item 横排 -->
+        <!-- 三个 Item 横排（始终展示，用占位符） -->
         <view class="dash-row">
           <!-- Item 1: Token 用量 -->
           <view class="dash-item">
@@ -80,20 +75,20 @@
           </view>
         </view>
 
-        <!-- 费用速览（合并在卡片内） -->
-        <view class="cost-section" wx:if="{{summary}}">
+        <!-- 费用速览（始终展示占位） -->
+        <view class="cost-section">
           <view class="cost-row">
             <view class="cost-item">
               <text class="cost-label">实际花费</text>
-              <text class="cost-value">{{summary.actualCost}}</text>
+              <text class="cost-value">{{summary.actualCost || '--'}}</text>
             </view>
             <view class="cost-item">
               <text class="cost-label">节省金额</text>
-              <text class="cost-value success">{{summary.savedAmount}}</text>
+              <text class="cost-value success">{{summary.savedAmount || '--'}}</text>
             </view>
             <view class="cost-item">
               <text class="cost-label">日均花费</text>
-              <text class="cost-value">{{summary.avgDaily}}</text>
+              <text class="cost-value">{{summary.avgDaily || '--'}}</text>
             </view>
           </view>
         </view>
@@ -110,73 +105,69 @@
       <view class="cloud-card" bindtap="goCloudMonitor" wx:if="{{cloudConfigured}}">
         <view class="cloud-header">
           <text class="cloud-title">云服务监控</text>
-          <text class="cloud-status {{cloudData.status === 'RUNNING' ? 'running' : ''}}">{{cloudData.status === 'RUNNING' ? '运行中' : (cloudData.status || '--')}}</text>
+          <view class="cloud-status-wrap">
+            <text class="card-loading-hint" wx:if="{{cloudLoading}}">加载中...</text>
+            <text class="cloud-status {{cloudData.status === 'RUNNING' ? 'running' : ''}}" wx:else>{{cloudData.status === 'RUNNING' ? '运行中' : (cloudData.status || '--')}}</text>
+          </view>
         </view>
 
-        <!-- 加载中 -->
-        <view class="cloud-loading" wx:if="{{cloudLoading}}">
-          <text class="loading-text">加载中...</text>
-        </view>
-
-        <block wx:else>
-          <!-- 四个 Item 横排 -->
-          <view class="cloud-row">
-            <!-- Item 1: 系统盘 -->
-            <view class="cloud-item">
-              <text class="cloud-label">系统盘</text>
-              <view class="cloud-ring-wrap">
-                <view class="cloud-ring" style="background: conic-gradient({{cloudData.diskPercent > 80 ? '#FF3B30' : '#34C759'}} {{cloudData.diskPercent * 3.6}}deg, #F0F0F0 0deg);">
-                  <view class="cloud-ring-inner">
-                    <text class="cloud-ring-pct">{{cloudData.diskPercent > 0 ? cloudData.diskPercent + '%' : '--'}}</text>
-                  </view>
+        <!-- 四个 Item 横排（始终展示，用占位符） -->
+        <view class="cloud-row">
+          <!-- Item 1: 系统盘 -->
+          <view class="cloud-item">
+            <text class="cloud-label">系统盘</text>
+            <view class="cloud-ring-wrap">
+              <view class="cloud-ring" style="background: conic-gradient({{cloudData.diskPercent > 80 ? '#FF3B30' : '#34C759'}} {{cloudData.diskPercent * 3.6}}deg, #F0F0F0 0deg);">
+                <view class="cloud-ring-inner">
+                  <text class="cloud-ring-pct">{{cloudData.diskPercent > 0 ? cloudData.diskPercent + '%' : '--'}}</text>
                 </view>
               </view>
-              <text class="cloud-val">{{cloudData.diskUsed || '--'}}</text>
-              <text class="cloud-sub">/{{cloudData.diskTotal || '--'}}</text>
             </view>
+            <text class="cloud-val">{{cloudData.diskUsed || '--'}}</text>
+            <text class="cloud-sub">/{{cloudData.diskTotal || '--'}}</text>
+          </view>
 
-            <!-- 分割线 -->
-            <view class="cloud-divider"></view>
+          <!-- 分割线 -->
+          <view class="cloud-divider"></view>
 
-            <!-- Item 2: CPU -->
-            <view class="cloud-item">
-              <text class="cloud-label">CPU | {{cloudData.cpuCores || '-'}}核</text>
-              <text class="cloud-big-val {{cloudData.cpuPercent > 80 ? 'danger' : ''}}">{{cloudData.cpuPercent || '--'}}<text class="cloud-unit">%</text></text>
-              <view class="cloud-bar">
-                <view class="cloud-bar-fill {{cloudData.cpuPercent > 80 ? 'danger' : ''}}" style="width: {{cloudData.cpuPercent || 0}}%"></view>
-              </view>
-            </view>
-
-            <!-- 分割线 -->
-            <view class="cloud-divider"></view>
-
-            <!-- Item 3: 内存 -->
-            <view class="cloud-item">
-              <text class="cloud-label">内存 | {{cloudData.memTotal || '-'}}</text>
-              <text class="cloud-big-val {{cloudData.memPercent > 80 ? 'danger' : ''}}">{{cloudData.memUsed || '--'}}<text class="cloud-unit"> MB</text></text>
-              <view class="cloud-bar">
-                <view class="cloud-bar-fill mem {{cloudData.memPercent > 80 ? 'danger' : ''}}" style="width: {{cloudData.memPercent || 0}}%"></view>
-              </view>
-            </view>
-
-            <!-- 分割线 -->
-            <view class="cloud-divider"></view>
-
-            <!-- Item 4: 流量包 -->
-            <view class="cloud-item">
-              <text class="cloud-label">流量包</text>
-              <view class="cloud-ring-wrap">
-                <view class="cloud-ring" style="background: conic-gradient({{cloudData.trafficPercent > 80 ? '#FF3B30' : '#007AFF'}} {{cloudData.trafficPercent * 3.6}}deg, #F0F0F0 0deg);">
-                  <view class="cloud-ring-inner">
-                    <text class="cloud-ring-pct">{{cloudData.trafficPercent || '0'}}%</text>
-                  </view>
-                </view>
-              </view>
-              <text class="cloud-val">{{cloudData.trafficUsed || '--'}}</text>
-              <text class="cloud-sub">/{{cloudData.trafficTotal || '--'}}</text>
+          <!-- Item 2: CPU -->
+          <view class="cloud-item">
+            <text class="cloud-label">CPU | {{cloudData.cpuCores || '-'}}核</text>
+            <text class="cloud-big-val {{cloudData.cpuPercent > 80 ? 'danger' : ''}}">{{cloudData.cpuPercent || '--'}}<text class="cloud-unit">%</text></text>
+            <view class="cloud-bar">
+              <view class="cloud-bar-fill {{cloudData.cpuPercent > 80 ? 'danger' : ''}}" style="width: {{cloudData.cpuPercent || 0}}%"></view>
             </view>
           </view>
-        </block>
+
+          <!-- 分割线 -->
+          <view class="cloud-divider"></view>
+
+          <!-- Item 3: 内存 -->
+          <view class="cloud-item">
+            <text class="cloud-label">内存 | {{cloudData.memTotal || '-'}}</text>
+            <text class="cloud-big-val {{cloudData.memPercent > 80 ? 'danger' : ''}}">{{cloudData.memUsed || '--'}}<text class="cloud-unit"> MB</text></text>
+            <view class="cloud-bar">
+              <view class="cloud-bar-fill mem {{cloudData.memPercent > 80 ? 'danger' : ''}}" style="width: {{cloudData.memPercent || 0}}%"></view>
+            </view>
+          </view>
+
+          <!-- 分割线 -->
+          <view class="cloud-divider"></view>
+
+          <!-- Item 4: 流量包 -->
+          <view class="cloud-item">
+            <text class="cloud-label">流量包</text>
+            <view class="cloud-ring-wrap">
+              <view class="cloud-ring" style="background: conic-gradient({{cloudData.trafficPercent > 80 ? '#FF3B30' : '#007AFF'}} {{cloudData.trafficPercent * 3.6}}deg, #F0F0F0 0deg);">
+                <view class="cloud-ring-inner">
+                  <text class="cloud-ring-pct">{{cloudData.trafficPercent || '0'}}%</text>
+                </view>
+              </view>
+            </view>
+            <text class="cloud-val">{{cloudData.trafficUsed || '--'}}</text>
+            <text class="cloud-sub">/{{cloudData.trafficTotal || '--'}}</text>
+          </view>
+        </view>
 
         <!-- 底部 -->
         <view class="cloud-footer">
@@ -196,13 +187,11 @@
         </view>
       </view>
 
-
-      <!-- 无数据 -->
+      <!-- 无数据（API已配置但拿不到数据且不在加载中） -->
       <view class="no-data" wx:if="{{!summary && !loading}}">
         <text class="no-data-icon">📊</text>
         <text class="no-data-text">暂无数据</text>
         <text class="no-data-sub">请检查 API 配置是否正确</text>
       </view>
-    </block>
   </block>
 </view>
