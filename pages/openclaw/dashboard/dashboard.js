@@ -1,6 +1,7 @@
 const { getData, formatDate } = require('../../../utils/util')
+const { CACHE_TTL, callOpenClaw, formatTokens, isMemCacheValid, updateMemCache, clearMemCache, isLoading, setLoading } = require('../../../utils/api')
 
-const CACHE_TTL = 30 * 1000
+const OC_CACHE_KEY = 'oc_dashboard'
 
 Page({
   data: {
@@ -36,6 +37,7 @@ Page({
   },
 
   _cacheTime: 0,
+  _loaded: false,
 
   onLoad() {
     const sysInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
@@ -44,9 +46,17 @@ Page({
     const navBarHeight = statusBarHeight + menuBtn.height + (menuBtn.top - statusBarHeight) * 2
 
     this.setData({ statusBarHeight, navBarHeight })
+    this._loaded = false
   },
 
   onShow() {
+    if (!this._loaded) {
+      this._loaded = true
+      this.loadAll()
+      return
+    }
+    // 缓存未过期则跳过
+    if (isMemCacheValid(OC_CACHE_KEY, CACHE_TTL.dashboard)) return
     this.loadAll()
   },
 
@@ -58,10 +68,9 @@ Page({
     const config = getData('openclawConfig', null)
     if (!config || !config.serverUrl) return
 
-    // 缓存命中
-    if (this.data.lastUpdate && (Date.now() - this._cacheTime < CACHE_TTL)) {
-      return
-    }
+    // 防重入
+    if (isLoading(OC_CACHE_KEY)) return
+    setLoading(OC_CACHE_KEY, true)
 
     this.setData({ loading: true })
 
@@ -81,11 +90,12 @@ Page({
       refreshing: false,
       lastUpdate: formatDate(new Date(), 'HH:mm')
     })
-    this._cacheTime = Date.now()
+    updateMemCache(OC_CACHE_KEY)
+    setLoading(OC_CACHE_KEY, false)
   },
 
   refreshAll() {
-    this._cacheTime = 0
+    clearMemCache(OC_CACHE_KEY)
     this.setData({ refreshing: true })
     this.loadAll()
   },
@@ -98,7 +108,7 @@ Page({
   async fetchGatewayHealth(config) {
     try {
       const startTime = Date.now()
-      const res = await this.callCloud('testConnection', config)
+      const res = await callOpenClaw('testConnection', config)
       const elapsed = Date.now() - startTime
 
       if (res.success) {
@@ -120,7 +130,7 @@ Page({
   // ========== 模型列表 ==========
   async fetchModels(config) {
     try {
-      const res = await this.callCloud('getModels', config)
+      const res = await callOpenClaw('getModels', config)
       console.log('[OC Models] 返回结果:', JSON.stringify(res).substring(0, 500))
 
       if (res.success && res.data) {
@@ -155,7 +165,7 @@ Page({
   // ========== Agent 列表 ==========
   async fetchAgents(config) {
     try {
-      const res = await this.callCloud('getAgents', config)
+      const res = await callOpenClaw('getAgents', config)
       if (res.success && res.data) {
         const agents = (Array.isArray(res.data) ? res.data : []).map(a => ({
           id: a.id || a.agentId || 'main',
@@ -180,12 +190,12 @@ Page({
   // ========== 统计概览 ==========
   async fetchStats(config) {
     try {
-      const res = await this.callCloud('getStats', config)
+      const res = await callOpenClaw('getStats', config)
       if (res.success && res.data) {
         const d = res.data
         this.setData({
           stats: {
-            totalTokens: this.formatTokens(d.totalTokens || 0),
+            totalTokens: formatTokens(d.totalTokens || 0),
             totalMessages: (d.totalMessages || 0) + '',
             totalSessions: (d.totalSessions || 0) + '',
             avgResponseMs: d.avgResponseMs ? (d.avgResponseMs + 'ms') : '--'
@@ -195,30 +205,6 @@ Page({
     } catch (err) {
       console.error('[OC] fetchStats:', err)
     }
-  },
-
-  // ========== 云函数调用封装 ==========
-  callCloud(action, config) {
-    return new Promise((resolve) => {
-      wx.cloud.callFunction({
-        name: 'openClawProxy',
-        data: {
-          action,
-          serverUrl: config.serverUrl,
-          apiToken: config.apiToken || ''
-        },
-        success: (r) => resolve(r.result || {}),
-        fail: (err) => resolve({ success: false, error: err.errMsg })
-      })
-    })
-  },
-
-  formatTokens(num) {
-    if (!num) return '0'
-    if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
-    if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M'
-    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K'
-    return num + ''
   },
 
   // ========== 页面导航 ==========

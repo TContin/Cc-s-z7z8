@@ -1,8 +1,18 @@
 const { getData, formatDate } = require('../../utils/util')
 const { decrypt } = require('../../utils/crypto')
-
-// 缓存有效期（毫秒）
-const CACHE_TTL = 30 * 1000  // 30 秒
+const {
+  CACHE_TTL,
+  callCloudFunction,
+  callOpenClaw,
+  formatTokens,
+  checkTokenLocally,
+  getCachedData,
+  setCachedData,
+  isMemCacheValid,
+  updateMemCache,
+  isLoading,
+  setLoading
+} = require('../../utils/api')
 
 Page({
   data: {
@@ -48,28 +58,66 @@ Page({
     openclawModels: []
   },
 
-  // 内存级缓存时间戳
-  _apiCacheTime: 0,
-  _cloudCacheTime: 0,
-  _openclawCacheTime: 0,
+  _firstLoad: true,
 
   onLoad() {
     this.setToday()
+    // 首次加载：先从 Storage 缓存恢复数据（秒开）
+    this._restoreFromCache()
   },
 
   onShow() {
-    // 两个监控并行发起，不再串行等待
+    // 防止 onLoad + onShow 首次双重触发
+    if (this._firstLoad) {
+      this._firstLoad = false
+      this.loadAll()
+      return
+    }
+    // 后续 onShow：只在缓存过期时才重新请求
     this.loadAll()
+  },
+
+  // 从 Storage 恢复上次缓存数据（秒开体验）
+  _restoreFromCache() {
+    const apiCache = getCachedData('dash_api')
+    if (apiCache && apiCache.data) {
+      this.setData({
+        configured: true,
+        summary: apiCache.data.summary,
+        models: apiCache.data.models,
+        lastUpdate: apiCache.data.lastUpdate
+      })
+    }
+    const cloudCache = getCachedData('dash_cloud')
+    if (cloudCache && cloudCache.data) {
+      this.setData({
+        cloudConfigured: true,
+        cloudData: cloudCache.data.cloudData,
+        cloudLastUpdate: cloudCache.data.cloudLastUpdate
+      })
+    }
+    const ocCache = getCachedData('dash_openclaw')
+    if (ocCache && ocCache.data) {
+      this.setData({
+        openclawConfigured: true,
+        openclawData: ocCache.data.openclawData,
+        openclawModels: ocCache.data.openclawModels,
+        openclawLastUpdate: ocCache.data.openclawLastUpdate
+      })
+    }
   },
 
   // 并行加载 API 监控 + 云服务监控 + OpenClaw 监控
   loadAll() {
+    if (isLoading('dashboard')) return
+    setLoading('dashboard', true)
     const p1 = this.checkConfig()
     const p2 = this.checkCloudConfig()
     const p3 = this.checkOpenClawConfig()
-    // 不需要 await，三个请求同时飞
     Promise.all([p1, p2, p3]).catch(err => {
       console.error('loadAll 异常:', err)
+    }).finally(() => {
+      setLoading('dashboard', false)
     })
   },
 
@@ -93,9 +141,8 @@ Page({
         apiConfig: config || {}
       })
 
-      // 缓存命中：30 秒内不重新请求
-      if (this.data.summary && (Date.now() - this._apiCacheTime < CACHE_TTL)) {
-        console.log('[API缓存] 命中，跳过请求')
+      // 缓存命中：2 分钟内不重新请求
+      if (this.data.summary && isMemCacheValid('dash_api', CACHE_TTL.dashboard)) {
         return
       }
 
@@ -109,7 +156,7 @@ Page({
           this.setData({ loading: false })
         }
       } else {
-        // 有 cookie —— 先检查 token 是否快过期，提前刷新避免 401 重试
+        // 【优化】Token 本地检查，不走云函数
         await this.ensureTokenFresh()
         await this.fetchDashboard()
       }
@@ -118,36 +165,24 @@ Page({
     }
   },
 
-  // 预检 token：如果即将过期（< 5 分钟），提前刷新
+  // 【优化】Token 预检：本地解析 JWT 过期时间，只有需要刷新时才调云函数
   async ensureTokenFresh() {
     const apiConfig = this.data.apiConfig
     if (!apiConfig || !apiConfig.cookie) return
 
     try {
-      const checkRes = await new Promise((resolve) => {
-        wx.cloud.callFunction({
-          name: 'apiProxy',
-          data: { action: 'checkToken', cookie: apiConfig.cookie },
-          success: (r) => resolve(r.result || {}),
-          fail: () => resolve({ success: false })
-        })
-      })
+      // 本地检查 Token（不调云函数，节省 1-3 秒！）
+      const tokenInfo = checkTokenLocally(apiConfig.cookie)
 
-      // token 还有超过 5 分钟，不需要刷新
-      if (checkRes.success && checkRes.remaining > 300) {
-        return
-      }
+      // token 还有效，直接返回
+      if (tokenInfo.valid) return
 
-      console.log('[Token预检] 即将过期(剩余' + (checkRes.remaining || 0) + 's)，提前刷新')
+      console.log('[Token预检] 即将过期(剩余' + tokenInfo.remaining + 's)，提前刷新')
 
-      // 尝试用 refresh_token 刷新
-      const refreshRes = await new Promise((resolve) => {
-        wx.cloud.callFunction({
-          name: 'apiProxy',
-          data: { action: 'refreshToken', cookie: apiConfig.cookie },
-          success: (r) => resolve(r.result || {}),
-          fail: () => resolve({ success: false })
-        })
+      // 只在需要刷新时才调云函数
+      const refreshRes = await callCloudFunction('apiProxy', {
+        action: 'refreshToken',
+        cookie: apiConfig.cookie
       })
 
       if (refreshRes.success && refreshRes.cookie) {
@@ -158,13 +193,11 @@ Page({
         this.setData({ apiConfig: config })
         console.log('[Token预检] 刷新成功')
       } else if (refreshRes.needReLogin) {
-        // refresh_token 也过期了，尝试用密码重新登录
         console.log('[Token预检] refresh_token 失效，尝试密码登录')
         await this.loginWithCredentials()
       }
     } catch (err) {
       console.error('[Token预检] 异常:', err)
-      // 预检失败不阻塞，后续请求会走 401 重试兜底
     }
   },
 
@@ -173,8 +206,7 @@ Page({
 
     try {
       await this.fetchSummary()
-      // 请求成功，更新缓存时间戳
-      this._apiCacheTime = Date.now()
+      updateMemCache('dash_api')
     } catch (err) {
       console.error('仪表盘数据获取失败:', err)
     }
@@ -201,7 +233,6 @@ Page({
         const days = Array.isArray(d) ? d : []
         const models = res.data.modelDistribution || []
 
-        // 汇总所有天的数据
         let totalOfficial = 0, totalActual = 0, totalSavings = 0
         let totalInput = 0, totalOutput = 0, totalTokens = 0
         let totalRequests = 0
@@ -220,25 +251,31 @@ Page({
         const dailyReq = days.length > 0 ? Math.round(totalRequests / days.length) : 0
         const savePct = totalOfficial > 0 ? Math.round((totalSavings / totalOfficial) * 100) : 0
 
-        this.setData({
-          summary: {
-            savedAmount: '¥' + totalSavings.toFixed(2),
-            savedPercent: savePct + '%',
-            actualCost: '¥' + totalActual.toFixed(2),
-            avgDaily: '¥' + avgDaily.toFixed(2),
-            totalTokens: this.formatTokens(totalTokens),
-            inputTokens: this.formatTokens(totalInput),
-            outputTokens: this.formatTokens(totalOutput),
-            totalRequests: totalRequests + '',
-            dailyRequests: dailyReq + ''
-          },
-          models: models.map(m => ({
-            name: m.model,
-            tokens: this.formatTokens(m.tokens),
-            cost: '¥' + Number(m.cost).toFixed(2),
-            requests: m.requests,
-            color: m.fill || '#007AFF'
-          }))
+        const summary = {
+          savedAmount: '¥' + totalSavings.toFixed(2),
+          savedPercent: savePct + '%',
+          actualCost: '¥' + totalActual.toFixed(2),
+          avgDaily: '¥' + avgDaily.toFixed(2),
+          totalTokens: formatTokens(totalTokens),
+          inputTokens: formatTokens(totalInput),
+          outputTokens: formatTokens(totalOutput),
+          totalRequests: totalRequests + '',
+          dailyRequests: dailyReq + ''
+        }
+        const modelList = models.map(m => ({
+          name: m.model,
+          tokens: formatTokens(m.tokens),
+          cost: '¥' + Number(m.cost).toFixed(2),
+          requests: m.requests,
+          color: m.fill || '#007AFF'
+        }))
+
+        this.setData({ summary, models: modelList })
+
+        // 持久化到 Storage 缓存
+        setCachedData('dash_api', {
+          summary, models: modelList,
+          lastUpdate: formatDate(new Date(), 'HH:mm')
         })
       }
     } catch (err) {
@@ -246,7 +283,6 @@ Page({
     }
   },
 
-  // 使用账号密码登录获取 Cookie
   async loginWithCredentials() {
     const credentials = getData('apiCredentials', null)
     if (!credentials || !credentials.email || !credentials.password) {
@@ -257,18 +293,11 @@ Page({
       const plainPassword = decrypt(credentials.password)
       if (!plainPassword) return false
 
-      const res = await new Promise((resolve) => {
-        wx.cloud.callFunction({
-          name: 'apiProxy',
-          data: {
-            action: 'passwordLogin',
-            email: credentials.email,
-            password: plainPassword,
-            cookie: this.data.apiConfig ? this.data.apiConfig.cookie : ''
-          },
-          success: (r) => resolve(r.result || {}),
-          fail: (err) => resolve({ success: false, error: err.errMsg })
-        })
+      const res = await callCloudFunction('apiProxy', {
+        action: 'passwordLogin',
+        email: credentials.email,
+        password: plainPassword,
+        cookie: this.data.apiConfig ? this.data.apiConfig.cookie : ''
       })
 
       if (res.success && res.cookie) {
@@ -297,7 +326,6 @@ Page({
         data: { path, cookie: apiConfig.cookie },
         success: (res) => {
           const result = res.result || {}
-          // 如果返回了新 Cookie，更新本地
           if (result.newCookie) {
             const config = getData('apiConfig', {})
             config.cookie = result.newCookie
@@ -318,14 +346,6 @@ Page({
     })
   },
 
-  formatTokens(num) {
-    if (!num) return '0'
-    if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B'
-    if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M'
-    if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K'
-    return num + ''
-  },
-
   goApiMonitor() {
     wx.navigateTo({ url: '/pages/apimonitor/apimonitor' })
   },
@@ -339,9 +359,8 @@ Page({
     if (config && config.secretId && config.secretKey) {
       this.setData({ cloudConfigured: true })
 
-      // 缓存命中：30 秒内不重新请求
-      if (this.data.cloudData.status !== '--' && (Date.now() - this._cloudCacheTime < CACHE_TTL)) {
-        console.log('[云监控缓存] 命中，跳过请求')
+      // 缓存命中：2 分钟内不重新请求
+      if (this.data.cloudData.status !== '--' && isMemCacheValid('dash_cloud', CACHE_TTL.cloud)) {
         return
       }
 
@@ -363,18 +382,11 @@ Page({
         return
       }
 
-      const res = await new Promise((resolve) => {
-        wx.cloud.callFunction({
-          name: 'tencentCloud',
-          data: {
-            action: 'getDashboard',
-            secretId: config.secretId,
-            secretKey: secretKey,
-            region: config.region || 'ap-guangzhou'
-          },
-          success: (r) => resolve(r.result || {}),
-          fail: (err) => resolve({ success: false, error: err.errMsg })
-        })
+      const res = await callCloudFunction('tencentCloud', {
+        action: 'getDashboard',
+        secretId: config.secretId,
+        secretKey: secretKey,
+        region: config.region || 'ap-guangzhou'
       })
 
       if (res.success && res.data) {
@@ -382,36 +394,36 @@ Page({
         const inst0 = d.instances && d.instances[0]
         const mon = d.monitor || {}
 
-        // 系统盘
         const diskTotal = inst0 ? inst0.diskSize : 0
         const diskPct = mon.diskUsage ? parseFloat(mon.diskUsage) : 0
         const diskUsedGB = diskTotal > 0 && diskPct > 0 ? (diskTotal * diskPct / 100).toFixed(1) : '--'
 
-        // 流量包
         const trafficPct = inst0 ? parseFloat(inst0.trafficPercent) || 0 : 0
         const trafficUsed = inst0 ? (inst0.trafficUsedMB + ' MB') : '--'
         const trafficTotal = inst0 ? (inst0.trafficTotalGB + 'GB') : '--'
 
-        this.setData({
-          cloudData: {
-            status: inst0 ? inst0.status : '--',
-            diskPercent: diskPct,
-            diskUsed: diskUsedGB !== '--' ? diskUsedGB + ' GB' : '--',
-            diskTotal: diskTotal + 'GB',
-            cpuCores: inst0 ? inst0.cpu : '-',
-            cpuPercent: mon.cpuPercent || 0,
-            memTotal: inst0 ? inst0.memory + 'GB' : '-',
-            memUsed: mon.memUsedMB || '--',
-            memPercent: mon.memPercent || 0,
-            trafficPercent: trafficPct,
-            trafficUsed: trafficUsed,
-            trafficTotal: trafficTotal
-          },
-          cloudLoading: false,
-          cloudLastUpdate: formatDate(new Date(), 'HH:mm')
-        })
-        // 更新缓存时间戳
-        this._cloudCacheTime = Date.now()
+        const cloudData = {
+          status: inst0 ? inst0.status : '--',
+          diskPercent: diskPct,
+          diskUsed: diskUsedGB !== '--' ? diskUsedGB + ' GB' : '--',
+          diskTotal: diskTotal + 'GB',
+          cpuCores: inst0 ? inst0.cpu : '-',
+          cpuPercent: mon.cpuPercent || 0,
+          memTotal: inst0 ? inst0.memory + 'GB' : '-',
+          memUsed: mon.memUsedMB || '--',
+          memPercent: mon.memPercent || 0,
+          trafficPercent: trafficPct,
+          trafficUsed: trafficUsed,
+          trafficTotal: trafficTotal
+        }
+        const cloudLastUpdate = formatDate(new Date(), 'HH:mm')
+
+        // 一次 setData 合并更新
+        this.setData({ cloudData, cloudLoading: false, cloudLastUpdate })
+        updateMemCache('dash_cloud')
+
+        // 持久化到 Storage 缓存
+        setCachedData('dash_cloud', { cloudData, cloudLastUpdate })
       } else {
         this.setData({ cloudLoading: false })
       }
@@ -427,9 +439,8 @@ Page({
     if (config && config.serverUrl) {
       this.setData({ openclawConfigured: true })
 
-      // 缓存命中：30 秒内不重新请求
-      if (this.data.openclawData.totalSessions !== '--' && (Date.now() - this._openclawCacheTime < CACHE_TTL)) {
-        console.log('[OpenClaw缓存] 命中，跳过请求')
+      // 缓存命中：2 分钟内不重新请求
+      if (this.data.openclawData.totalSessions !== '--' && isMemCacheValid('dash_openclaw', CACHE_TTL.dashboard)) {
         return
       }
 
@@ -445,23 +456,7 @@ Page({
     if (!config || !config.serverUrl) return
 
     try {
-      const res = await new Promise((resolve) => {
-        wx.cloud.callFunction({
-          name: 'openClawProxy',
-          data: {
-            action: 'getDashboard',
-            serverUrl: config.serverUrl,
-            apiToken: config.apiToken || ''
-          },
-          success: (r) => resolve(r.result || {}),
-          fail: (err) => resolve({ success: false, error: err.errMsg })
-        })
-      })
-
-      // 打印调试信息
-      if (res.debug) {
-        console.log('[OpenClaw] 调试信息:', JSON.stringify(res.debug))
-      }
+      const res = await callOpenClaw('getDashboard', config)
 
       if (res.success && res.data) {
         const d = res.data
@@ -469,40 +464,38 @@ Page({
         const messages = d.messages || {}
         const models = d.models || []
 
-        // 模型颜色列表
         const colors = ['#007AFF', '#FF9500', '#AF52DE', '#FF3B30', '#34C759', '#5AC8FA', '#FF2D55', '#FFCC00']
-
-        // Gateway 状态映射
         const statusMap = { 'live': '运行中', 'ok': '正常', 'starting': '启动中' }
         const gwStatus = d.gatewayStatus || 'unknown'
         const gwStatusText = statusMap[gwStatus] || gwStatus
 
-        this.setData({
-          openclawData: {
-            gatewayStatus: d.healthy ? gwStatusText : '离线',
-            totalModels: models.length + '',
-            totalSessions: sessions.total > 0 ? sessions.total + '' : '--',
-            activeSessions: sessions.active > 0 ? sessions.active + '' : '--',
-            totalMessages: messages.total > 0 ? messages.total + '' : '--',
-            totalTokens: messages.tokens > 0 ? this.formatTokens(messages.tokens) : '--',
-            inputTokens: messages.inputTokens > 0 ? this.formatTokens(messages.inputTokens) : '--',
-            outputTokens: messages.outputTokens > 0 ? this.formatTokens(messages.outputTokens) : '--',
-            totalCost: d.cost && d.cost > 0 ? ('$' + Number(d.cost).toFixed(2)) : '--'
-          },
-          openclawModels: models.map((m, i) => ({
-            name: m.name || '--',
-            messages: m.messages || 0,
-            tokens: this.formatTokens(m.tokens || 0),
-            owned_by: m.owned_by || '',
-            color: colors[i % colors.length]
-          })),
-          openclawLoading: false,
-          openclawLastUpdate: formatDate(new Date(), 'HH:mm')
-        })
-        // 更新缓存时间戳
-        this._openclawCacheTime = Date.now()
+        const openclawData = {
+          gatewayStatus: d.healthy ? gwStatusText : '离线',
+          totalModels: models.length + '',
+          totalSessions: sessions.total > 0 ? sessions.total + '' : '--',
+          activeSessions: sessions.active > 0 ? sessions.active + '' : '--',
+          totalMessages: messages.total > 0 ? messages.total + '' : '--',
+          totalTokens: messages.tokens > 0 ? formatTokens(messages.tokens) : '--',
+          inputTokens: messages.inputTokens > 0 ? formatTokens(messages.inputTokens) : '--',
+          outputTokens: messages.outputTokens > 0 ? formatTokens(messages.outputTokens) : '--',
+          totalCost: d.cost && d.cost > 0 ? ('$' + Number(d.cost).toFixed(2)) : '--'
+        }
+        const openclawModels = models.map((m, i) => ({
+          name: m.name || '--',
+          messages: m.messages || 0,
+          tokens: formatTokens(m.tokens || 0),
+          owned_by: m.owned_by || '',
+          color: colors[i % colors.length]
+        }))
+        const openclawLastUpdate = formatDate(new Date(), 'HH:mm')
+
+        // 一次 setData 合并更新
+        this.setData({ openclawData, openclawModels, openclawLoading: false, openclawLastUpdate })
+        updateMemCache('dash_openclaw')
+
+        // 持久化到 Storage 缓存
+        setCachedData('dash_openclaw', { openclawData, openclawModels, openclawLastUpdate })
       } else {
-        console.error('[OpenClaw] 数据获取失败:', res.error)
         this.setData({ openclawLoading: false })
       }
     } catch (err) {

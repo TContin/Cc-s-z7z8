@@ -1,5 +1,6 @@
 const { getData, saveData, showToast, formatDate } = require('../../utils/util')
 const { decrypt } = require('../../utils/crypto')
+const { checkTokenLocally, callCloudFunction, formatTokens: fmtTokens } = require('../../utils/api')
 
 Page({
   data: {
@@ -20,11 +21,19 @@ Page({
     hasCredentials: false
   },
 
+  _loaded: false,
+
   onLoad() {
+    this._loaded = false
     this.checkConfig()
   },
 
   onShow() {
+    // 防止 onLoad + onShow 首次双重触发
+    if (!this._loaded) {
+      this._loaded = true
+      return
+    }
     this.checkConfig()
   },
 
@@ -309,31 +318,29 @@ Page({
     this.syncConfigToCloud(config)
   },
 
-  // 将配置同步到云端
-  syncConfigToCloud(config) {
-    wx.cloud.callFunction({
-      name: 'getOpenId',
-      success: (idRes) => {
-        const openid = idRes.result && idRes.result.openid
-        if (!openid) return
+  // 将配置同步到云端（使用全局缓存的 openId）
+  async syncConfigToCloud(config) {
+    try {
+      const { getOpenId } = require('../../utils/api')
+      const openid = await getOpenId()
+      if (!openid) return
 
-        const db = wx.cloud.database()
-        db.collection('user_data')
-          .where({ _openid: openid })
-          .limit(1)
-          .get()
-          .then(({ data: existing }) => {
-            const updateData = { apiConfig: config }
-            if (existing.length > 0) {
-              db.collection('user_data').doc(existing[0]._id).update({ data: updateData })
-            } else {
-              db.collection('user_data').add({ data: updateData })
-            }
-            console.log('Token 已同步到云端')
-          })
-          .catch(err => console.error('云端同步失败:', err))
+      const db = wx.cloud.database()
+      const { data: existing } = await db.collection('user_data')
+        .where({ _openid: openid })
+        .limit(1)
+        .get()
+
+      const updateData = { apiConfig: config }
+      if (existing.length > 0) {
+        db.collection('user_data').doc(existing[0]._id).update({ data: updateData })
+      } else {
+        db.collection('user_data').add({ data: updateData })
       }
-    })
+      console.log('Token 已同步到云端')
+    } catch (err) {
+      console.error('云端同步失败:', err)
+    }
   },
 
   async onRefresh() {

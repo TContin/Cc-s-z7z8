@@ -1,5 +1,6 @@
 const { getData, saveData, showToast, formatDate } = require('../../utils/util')
 const { decrypt } = require('../../utils/crypto')
+const { CACHE_TTL, isMemCacheValid, updateMemCache, callCloudFunction } = require('../../utils/api')
 
 Page({
   data: {
@@ -18,11 +19,22 @@ Page({
     diskRing: { percent: 0, used: '0', total: '0' }
   },
 
+  _loaded: false,
+
   onLoad() {
+    this._loaded = false
     this.checkConfig()
   },
 
   onShow() {
+    if (!this._loaded) {
+      this._loaded = true
+      return
+    }
+    // 缓存命中则跳过
+    if (this.data.lastUpdate && isMemCacheValid('cloudmonitor', CACHE_TTL.cloud)) {
+      return
+    }
     this.checkConfig()
   },
 
@@ -99,6 +111,7 @@ Page({
           refreshing: false,
           lastUpdate: formatDate(new Date(), 'HH:mm')
         })
+        updateMemCache('cloudmonitor')
       } else {
         showToast(res.error || '获取数据失败')
         this.setData({ loading: false, refreshing: false })

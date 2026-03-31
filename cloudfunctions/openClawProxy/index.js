@@ -21,7 +21,7 @@ function httpRequest(urlStr, options = {}) {
         'User-Agent': 'MiniProgram-OpenClaw-Monitor/1.0',
         ...(options.headers || {})
       },
-      timeout: 15000
+      timeout: 8000
     }
 
     const req = lib.request(reqOptions, (res) => {
@@ -62,6 +62,11 @@ function isValidJsonData(res) {
   return true
 }
 
+// 配置 API 可达性缓存（云函数实例级别，避免重复尝试不可达的 fallback）
+let _configApiReachable = null  // null=未知, true=可达, false=不可达
+let _configApiCheckTime = 0
+const CONFIG_API_CACHE_TTL = 60 * 1000  // 1 分钟内记住可达性
+
 // 解析模型列表（兼容多种数据结构）
 function parseModelsList(data) {
   if (Array.isArray(data)) return data
@@ -95,22 +100,27 @@ exports.main = async (event) => {
     configHeaders['Authorization'] = `Bearer ${apiToken}`
   }
 
-  // 辅助函数：优先从配置 API 获取数据
+  // 辅助函数：优先从配置 API 获取数据（带可达性缓存）
   async function fetchFromConfigApi(apiPath) {
     if (!configApiBase) return null
+    // 如果配置 API 最近确认不可达，直接跳过
+    if (_configApiReachable === false && (Date.now() - _configApiCheckTime < CONFIG_API_CACHE_TTL)) {
+      return null
+    }
     try {
       const url = `${configApiBase}${apiPath}`
       const res = await httpRequest(url, { headers: configHeaders })
       if (res.statusCode === 200 && res.data && !res.data._isHtml) {
-        // 配置 API 返回 { success: true, data: [...] }
+        _configApiReachable = true
+        _configApiCheckTime = Date.now()
         if (res.data.success && res.data.data !== undefined) {
           return res.data.data
         }
-        // 也兼容直接返回数据的情况
         return res.data
       }
     } catch (e) {
-      // 配置 API 不可用，静默失败
+      _configApiReachable = false
+      _configApiCheckTime = Date.now()
     }
     return null
   }

@@ -15,7 +15,7 @@ function httpsRequest(options, postData) {
       })
     })
     req.on('error', reject)
-    req.setTimeout(15000, () => { req.destroy(); reject(new Error('timeout')) })
+    req.setTimeout(10000, () => { req.destroy(); reject(new Error('timeout')) })
     if (postData) req.write(postData)
     req.end()
   })
