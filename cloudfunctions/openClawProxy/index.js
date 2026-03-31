@@ -80,13 +80,39 @@ exports.main = async (event) => {
   // 去掉末尾斜杠
   const baseUrl = serverUrl.replace(/\/+$/, '')
 
-  // OpenClaw Gateway 认证：支持多种方式
+  // 推算配置 API 地址（同一服务器的 9100 端口）
+  // serverUrl 可能是 https://openclaw.contin.online 或 http://43.133.49.144:18789
+  let configApiBase = ''
+  try {
+    const u = new URL(baseUrl)
+    // 配置 API 跑在同一台服务器的 9100 端口，通过 Nginx 反代或直接 IP 访问
+    configApiBase = `http://${u.hostname}:9100`
+  } catch (e) {
+    configApiBase = ''
+  }
+
+  // OpenClaw Gateway 认证
   const headers = {}
   if (apiToken) {
     headers['Authorization'] = `Bearer ${apiToken}`
-    // OpenClaw Gateway 还可能通过以下 header 接受 token
-    headers['X-API-Key'] = apiToken
-    headers['x-openclaw-token'] = apiToken
+  }
+
+  // 配置 API 认证（和 gateway token 相同）
+  const configHeaders = {}
+  if (apiToken) {
+    configHeaders['Authorization'] = `Bearer ${apiToken}`
+  }
+
+  // 辅助函数：优先从配置 API 获取数据
+  async function fetchFromConfigApi(path) {
+    if (!configApiBase) return null
+    try {
+      const res = await httpRequest(`${configApiBase}${path}`, { headers: configHeaders })
+      if (isValidJsonData(res) && res.data && res.data.success) {
+        return res.data.data
+      }
+    } catch (e) {}
+    return null
   }
 
   try {
@@ -106,81 +132,53 @@ exports.main = async (event) => {
 
     // ========== 获取仪表盘概览 ==========
     if (action === 'getDashboard') {
-      // 并行请求可用的 REST 端点
-      const [healthRes, modelsRes] = await Promise.all([
-        httpRequest(`${baseUrl}/health`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
-        httpRequest(`${baseUrl}/v1/models`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message }))
+      // 并行请求：健康检查 + 配置API模型 + 配置API统计
+      const [healthRes, configModels, configStats] = await Promise.all([
+        httpRequest(`${baseUrl}/health`, { headers }).catch(e => ({ statusCode: 0, data: null })),
+        fetchFromConfigApi('/api/models'),
+        fetchFromConfigApi('/api/stats')
       ])
 
-      // 如果 /v1/models 返回 HTML，尝试 query 参数方式
-      let finalModelsRes = modelsRes
-      if (!isValidJsonData(modelsRes) && apiToken) {
-        finalModelsRes = await httpRequest(`${baseUrl}/v1/models?token=${apiToken}`, { headers }).catch(e => modelsRes)
-      }
-
-      // 调试信息
-      const debug = {
-        health: { status: healthRes.statusCode, contentType: healthRes.contentType, isJson: isValidJsonData(healthRes) },
-        models: { status: finalModelsRes.statusCode, contentType: finalModelsRes.contentType, isJson: isValidJsonData(finalModelsRes) },
-        modelsRetried: finalModelsRes !== modelsRes
-      }
-
-      // ---- 解析健康状态 ----
       const healthy = healthRes.statusCode === 200
       const healthData = healthy ? healthRes.data : null
 
-      // ---- 解析模型列表 (GET /v1/models) ----
-      // OpenAI 兼容格式: { object: "list", data: [{ id, object, created, owned_by }] }
-      const modelMap = {}
-
-      if (isValidJsonData(finalModelsRes)) {
-        const modelsList = parseModelsList(finalModelsRes.data)
-
-        for (const m of modelsList) {
-          const name = m.id || m.name || m.model || ''
-          if (name) {
-            modelMap[name] = {
-              messages: 0,
-              tokens: 0,
-              owned_by: m.owned_by || '',
-              created: m.created || 0
-            }
-          }
-        }
-
-        debug.modelsCount = modelsList.length
-        // 记录第一个模型的结构以帮助调试
-        if (modelsList.length > 0) {
-          debug.modelSample = Object.keys(modelsList[0])
-        }
-      } else {
-        // /v1/models 返回了 HTML 而非 JSON，可能认证问题
-        debug.modelsError = finalModelsRes.data && finalModelsRes.data._raw
-          ? '返回了HTML而非JSON: ' + finalModelsRes.data._raw.substring(0, 100)
-          : '请求失败 HTTP ' + finalModelsRes.statusCode
+      // 模型列表
+      let modelDistribution = []
+      if (configModels && Array.isArray(configModels)) {
+        modelDistribution = configModels.map(m => ({
+          name: m.name || m.id || '--',
+          messages: 0,
+          tokens: 0,
+          owned_by: m.providerId || ''
+        }))
       }
 
-      // 转换 modelMap 为数组
-      const modelDistribution = Object.entries(modelMap)
-        .filter(([name]) => name !== 'unknown' && name !== '')
-        .map(([name, data]) => ({
-          name,
-          messages: data.messages,
-          tokens: data.tokens,
-          owned_by: data.owned_by
-        }))
+      // 统计
+      const stats = configStats || { totalTokens: 0, totalMessages: 0, totalSessions: 0 }
+
+      const debug = {
+        healthy,
+        modelsSource: configModels ? 'config-api' : 'none',
+        modelsCount: modelDistribution.length,
+        statsSource: configStats ? 'config-api' : 'none'
+      }
 
       return {
         success: true,
         data: {
-          sessions: { total: 0, active: 0 },  // WebSocket 才能获取，REST 不可用
-          messages: { total: 0, tokens: 0, inputTokens: 0, outputTokens: 0 },
+          sessions: { total: stats.totalSessions || 0, active: 0 },
+          messages: {
+            total: stats.totalMessages || 0,
+            tokens: stats.totalTokens || 0,
+            inputTokens: 0,
+            outputTokens: 0
+          },
           models: modelDistribution,
           cost: 0,
           healthy: healthy,
           gatewayStatus: healthData ? healthData.status : 'unknown'
         },
-        debug: debug  // 调试信息，帮助定位问题
+        debug
       }
     }
 
@@ -197,112 +195,74 @@ exports.main = async (event) => {
 
     // ========== 获取模型列表 ==========
     if (action === 'getModels') {
-      // 先尝试正常请求
-      let res = await httpRequest(`${baseUrl}/v1/models`, { headers })
-
-      // 如果返回了 HTML，尝试通过 query 参数传递 token
-      if (!isValidJsonData(res) && apiToken) {
-        res = await httpRequest(`${baseUrl}/v1/models?token=${apiToken}`, { headers })
+      // 优先从配置 API 读取（直接解析 openclaw.json）
+      const configModels = await fetchFromConfigApi('/api/models')
+      if (configModels) {
+        return { success: true, data: configModels, source: 'config-api' }
       }
 
+      // fallback: 尝试 Gateway REST
+      const res = await httpRequest(`${baseUrl}/v1/models`, { headers })
       if (isValidJsonData(res)) {
-        return { success: true, data: res.data }
+        return { success: true, data: res.data, source: 'gateway-rest' }
       }
 
-      // 返回详细错误信息用于调试
       return {
         success: false,
-        error: `模型列表获取失败 (HTTP ${res.statusCode})`,
-        contentType: res.contentType,
-        isHtml: !!(res.data && res.data._isHtml),
-        rawPreview: res.data && res.data._raw ? res.data._raw.substring(0, 150) : '',
-        hint: res.data && res.data._isHtml
-          ? '返回了HTML页面而非JSON。可能原因：1) Token格式不正确 2) Gateway未配置模型 3) 需要密码而非Token认证'
-          : ''
+        error: '模型列表获取失败。请确保服务器上已启动 openclaw-api 服务 (端口9100)',
+        hint: '在服务器上运行: sudo node /path/to/openclaw-api.js'
       }
     }
 
     // ========== 获取 Agent 列表 ==========
-    // OpenClaw 配置中的 agents 通过 /v1/models 推断
-    // 因为 REST 不直接暴露 agents，所以用模型列表构造虚拟 agent
     if (action === 'getAgents') {
-      const [healthRes, modelsRes] = await Promise.all([
-        httpRequest(`${baseUrl}/health`, { headers }).catch(e => ({ statusCode: 0, data: null })),
-        httpRequest(`${baseUrl}/v1/models`, { headers }).catch(e => ({ statusCode: 0, data: null }))
-      ])
-
-      const healthy = healthRes.statusCode === 200
-
-      // 从模型列表中提取 agent 风格的条目
-      // OpenClaw 在 /v1/models 中会返回 openclaw, openclaw/default, openclaw/<agentId>
-      const agents = []
-      if (isValidJsonData(modelsRes)) {
-        const list = parseModelsList(modelsRes.data)
-        const agentModels = list.filter(m => {
-          const id = m.id || ''
-          return id.startsWith('openclaw/') && id !== 'openclaw/default'
-        })
-
-        // 如果有 openclaw/ 前缀的，每个是一个 agent
-        if (agentModels.length > 0) {
-          agentModels.forEach(m => {
-            const agentId = (m.id || '').replace('openclaw/', '')
-            agents.push({
-              id: agentId,
-              name: agentId,
-              emoji: '🤖',
-              model: m.owned_by || '--',
-              state: healthy ? 'online' : 'offline',
-              sessionCount: 0,
-              platforms: []
-            })
-          })
-        } else {
-          // 没有明确的 agent，构造一个默认 "main" agent
-          agents.push({
-            id: 'main',
-            name: 'Main Bot',
-            emoji: '🦞',
-            model: list.length > 0 ? (list[0].id || '--') : '--',
-            state: healthy ? 'online' : 'offline',
-            sessionCount: 0,
-            platforms: []
-          })
-        }
+      // 优先从配置 API 读取
+      const configAgents = await fetchFromConfigApi('/api/agents')
+      if (configAgents) {
+        return { success: true, data: configAgents, source: 'config-api' }
       }
 
-      return { success: true, data: agents }
+      // fallback: 用 Gateway 健康状态构造默认 agent
+      const healthRes = await httpRequest(`${baseUrl}/health`, { headers }).catch(e => ({ statusCode: 0 }))
+      const healthy = healthRes.statusCode === 200
+
+      return {
+        success: true,
+        data: [{
+          id: 'main',
+          name: 'Main Bot',
+          emoji: '🦞',
+          model: '--',
+          state: healthy ? 'online' : 'offline',
+          sessionCount: 0,
+          platforms: []
+        }],
+        source: 'fallback'
+      }
     }
 
     // ========== 获取会话列表 ==========
-    // REST API 不直接暴露会话，返回提示信息
     if (action === 'getSessions') {
-      // 尝试通过 /api/sessions 探测（部分版本可能支持）
-      const res = await httpRequest(`${baseUrl}/api/sessions`, { headers }).catch(e => ({ statusCode: 0, data: null }))
-
-      if (isValidJsonData(res)) {
-        const sessions = Array.isArray(res.data) ? res.data : (res.data.sessions || res.data.data || [])
-        return { success: true, data: sessions }
+      const agentId = event.agentId || 'main'
+      const configSessions = await fetchFromConfigApi(`/api/sessions?agentId=${agentId}`)
+      if (configSessions) {
+        return { success: true, data: configSessions, source: 'config-api' }
       }
 
-      // REST 不支持，返回空列表并提示
       return {
         success: true,
         data: [],
-        hint: '会话数据需要通过 OpenClaw Dashboard Web UI 查看（Gateway 使用 WebSocket 传输会话数据）'
+        hint: '请确保服务器上已启动 openclaw-api 服务 (端口9100)'
       }
     }
 
     // ========== 获取统计概览 ==========
     if (action === 'getStats') {
-      // 尝试多个可能的统计端点
-      const res = await httpRequest(`${baseUrl}/api/stats`, { headers }).catch(e => ({ statusCode: 0, data: null }))
-
-      if (isValidJsonData(res)) {
-        return { success: true, data: res.data }
+      const configStats = await fetchFromConfigApi('/api/stats')
+      if (configStats) {
+        return { success: true, data: configStats, source: 'config-api' }
       }
 
-      // REST 不直接支持统计，返回空数据
       return {
         success: true,
         data: { totalTokens: 0, totalMessages: 0, totalSessions: 0, avgResponseMs: 0 }
