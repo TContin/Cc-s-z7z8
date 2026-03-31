@@ -178,26 +178,46 @@ function getSessions(agentId) {
   const sessions = readJsonFile(sessionsFile)
   if (!sessions || typeof sessions !== 'object') return []
 
-  const result = []
-  Object.entries(sessions).forEach(([key, s]) => {
-    // 检测会话类型
-    let type = 'other'
-    const k = key.toLowerCase()
-    if (k.includes(':main')) type = 'main'
-    else if (k.includes('feishu') && k.includes('direct')) type = 'feishu-dm'
-    else if (k.includes('feishu') && k.includes('group')) type = 'feishu-group'
-    else if (k.includes('discord') && k.includes('direct')) type = 'discord-dm'
-    else if (k.includes('discord')) type = 'discord-channel'
-    else if (k.includes('telegram') && k.includes('group')) type = 'telegram-group'
-    else if (k.includes('telegram')) type = 'telegram-dm'
-    else if (k.includes('whatsapp') && k.includes('group')) type = 'whatsapp-group'
-    else if (k.includes('whatsapp')) type = 'whatsapp-dm'
-    else if (k.includes('cron')) type = 'cron'
+  // 先尝试从 JSONL 中读取每个会话最后使用的模型
+  const sessionModels = getSessionModels(agentId)
 
-    // 提取 target
-    let target = ''
+  const result = []
+  const cronJobs = new Set() // 用于去重 cron:run（和 cron:job 是同一个任务）
+
+  Object.entries(sessions).forEach(([key, s]) => {
+    const k = key.toLowerCase()
     const parts = key.split(':')
-    if (parts.length >= 3) target = parts[parts.length - 1]
+
+    // 检测会话类型（更精准）
+    let type = 'other'
+    if (k.includes(':main') || k === 'main') type = 'main'
+    else if (k.startsWith('telegram:direct')) type = 'telegram-dm'
+    else if (k.startsWith('telegram:group')) type = 'telegram-group'
+    else if (k.startsWith('telegram:slash')) type = 'telegram-dm' // slash 命令也算私聊
+    else if (k.startsWith('feishu:direct') || k.startsWith('lark:direct')) type = 'feishu-dm'
+    else if (k.startsWith('feishu:group') || k.startsWith('lark:group')) type = 'feishu-group'
+    else if (k.startsWith('discord:direct')) type = 'discord-dm'
+    else if (k.startsWith('discord:channel') || k.startsWith('discord:')) type = 'discord-channel'
+    else if (k.startsWith('whatsapp:direct')) type = 'whatsapp-dm'
+    else if (k.startsWith('whatsapp:group')) type = 'whatsapp-group'
+    else if (k.startsWith('wechat:direct') || k.startsWith('weixin:direct') || k.startsWith('openclaw-weixin:direct')) type = 'wechat-dm'
+    else if (k.startsWith('wechat:group') || k.startsWith('weixin:group') || k.startsWith('openclaw-weixin:group')) type = 'wechat-group'
+    else if (k.startsWith('cron:run:')) {
+      // cron:run 和 cron:job 是同一个任务，跳过 cron:run
+      return
+    }
+    else if (k.startsWith('cron:job:') || k.includes('cron')) type = 'cron'
+
+    // 提取 target（显示友好的标识）
+    let target = ''
+    if (parts.length >= 3) {
+      target = parts.slice(2).join(':')
+      // 如果 target 太长，截断
+      if (target.length > 30) target = target.slice(0, 12) + '...' + target.slice(-8)
+    }
+
+    // 获取当前模型（从 JSONL 中最后的 model_change 事件）
+    const currentModel = sessionModels[key] || ''
 
     result.push({
       key,
@@ -207,13 +227,43 @@ function getSessions(agentId) {
       updatedAt: s.updatedAt || 0,
       totalTokens: s.totalTokens || 0,
       contextTokens: s.contextTokens || 0,
-      systemSent: s.systemSent !== false
+      systemSent: s.systemSent !== false,
+      currentModel
     })
   })
 
   // 按最近更新排序
   result.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
   return result
+}
+
+// 从 JSONL 日志中提取每个会话最后使用的模型
+function getSessionModels(agentId) {
+  const sessionsDir = path.join(OPENCLAW_HOME, 'agents', agentId || 'main', 'sessions')
+  const modelMap = {} // { filename: lastModelId }
+
+  try {
+    const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith('.jsonl') && !f.includes('.deleted.'))
+    files.forEach(f => {
+      try {
+        const content = fs.readFileSync(path.join(sessionsDir, f), 'utf-8')
+        const lines = content.split('\n').filter(l => l.trim())
+        // 从后往前找最后一个 model_change
+        for (let i = lines.length - 1; i >= 0; i--) {
+          try {
+            const obj = JSON.parse(lines[i])
+            if (obj.type === 'model_change' && obj.modelId) {
+              // 用文件名关联到 session key（简化映射）
+              modelMap[f] = obj.modelId
+              break
+            }
+          } catch (e) {}
+        }
+      } catch (e) {}
+    })
+  } catch (e) {}
+
+  return modelMap
 }
 
 // 获取统计数据

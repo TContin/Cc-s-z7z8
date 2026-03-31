@@ -134,10 +134,12 @@ Page({
         'feishu-group': { type: 'group', cls: 'group', icon: '📎', label: '飞书群聊' },
         'discord-dm': { type: 'dm', cls: 'dm', icon: '🎮', label: 'Discord 私聊' },
         'discord-channel': { type: 'group', cls: 'group', icon: '🎮', label: 'Discord 频道' },
-        'telegram-dm': { type: 'dm', cls: 'dm', icon: '✈️', label: 'Telegram 私聊' },
-        'telegram-group': { type: 'group', cls: 'group', icon: '✈️', label: 'Telegram 群聊' },
+        'telegram-dm': { type: 'dm', cls: 'dm', icon: '✈️', label: 'TG 私聊' },
+        'telegram-group': { type: 'group', cls: 'group', icon: '✈️', label: 'TG 群聊' },
         'whatsapp-dm': { type: 'dm', cls: 'dm', icon: '📱', label: 'WhatsApp 私聊' },
         'whatsapp-group': { type: 'group', cls: 'group', icon: '📱', label: 'WhatsApp 群聊' },
+        'wechat-dm': { type: 'dm', cls: 'dm', icon: '💬', label: '微信私聊' },
+        'wechat-group': { type: 'group', cls: 'group', icon: '💬', label: '微信群聊' },
         'cron': { type: 'cron', cls: 'cron', icon: '⏰', label: '定时任务' },
         'main': { type: 'main', cls: 'main', icon: '🦞', label: '主会话' }
       }
@@ -145,12 +147,18 @@ Page({
     }
 
     const k = key.toLowerCase()
-    if (k.includes(':main')) return { type: 'main', cls: 'main', icon: '🦞', label: '主会话' }
+    if (k.includes(':main') || k === 'main') return { type: 'main', cls: 'main', icon: '🦞', label: '主会话' }
+    if (k.startsWith('telegram:direct') || k.startsWith('telegram:slash')) return { type: 'dm', cls: 'dm', icon: '✈️', label: 'TG 私聊' }
+    if (k.startsWith('telegram:group')) return { type: 'group', cls: 'group', icon: '✈️', label: 'TG 群聊' }
     if (k.includes('feishu') && k.includes('direct')) return { type: 'dm', cls: 'dm', icon: '📎', label: '飞书私聊' }
     if (k.includes('feishu') && k.includes('group')) return { type: 'group', cls: 'group', icon: '📎', label: '飞书群聊' }
     if (k.includes('discord') && k.includes('direct')) return { type: 'dm', cls: 'dm', icon: '🎮', label: 'Discord 私聊' }
     if (k.includes('discord')) return { type: 'group', cls: 'group', icon: '🎮', label: 'Discord 频道' }
-    if (k.includes('telegram') && k.includes('group')) return { type: 'group', cls: 'group', icon: '✈️', label: 'TG 群聊' }
+    if (k.includes('wechat') || k.includes('weixin') || k.includes('openclaw-weixin')) {
+      if (k.includes('group')) return { type: 'group', cls: 'group', icon: '💬', label: '微信群聊' }
+      return { type: 'dm', cls: 'dm', icon: '💬', label: '微信私聊' }
+    }
+    if (k.includes('telegram')) return { type: 'dm', cls: 'dm', icon: '✈️', label: 'TG 私聊' }
     if (k.includes('telegram')) return { type: 'dm', cls: 'dm', icon: '✈️', label: 'TG 私聊' }
     if (k.includes('cron')) return { type: 'cron', cls: 'cron', icon: '⏰', label: '定时任务' }
     return { type: 'other', cls: 'other', icon: '💬', label: '其他' }
