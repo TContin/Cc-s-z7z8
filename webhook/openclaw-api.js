@@ -42,13 +42,9 @@ function jsonResponse(res, data, status = 200) {
 function readJsonFile(filePath) {
   try {
     const content = fs.readFileSync(filePath, 'utf-8')
-    // 支持 JSON5（去掉注释和尾逗号）
-    const cleaned = content
-      .replace(/\/\/.*$/gm, '')
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/,\s*([\]}])/g, '$1')
-    return JSON.parse(cleaned)
+    return JSON.parse(content)
   } catch (e) {
+    console.error(`[readJsonFile] 读取失败 ${filePath}:`, e.message)
     return null
   }
 }
