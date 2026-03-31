@@ -116,6 +116,7 @@
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 6rpx;
+  transition: opacity 0.3s ease;
 }
 
 .dash-value.primary {
@@ -296,11 +297,13 @@
   font-size: 22rpx;
   font-weight: 600;
   color: var(--text-primary);
+  transition: opacity 0.3s ease;
 }
 
 .cloud-sub {
   font-size: 18rpx;
   color: var(--text-hint);
+  transition: opacity 0.3s ease;
 }
 
 /* 进度条样式 */
@@ -309,6 +312,7 @@
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 8rpx;
+  transition: opacity 0.3s ease;
 }
 
 .cloud-big-val.danger {
@@ -390,6 +394,7 @@
   font-size: 32rpx;
   font-weight: 700;
   color: var(--text-primary);
+  transition: opacity 0.3s ease;
 }
 
 .cost-value.success {

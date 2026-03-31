@@ -1,6 +1,9 @@
 const { getData, formatDate } = require('../../utils/util')
 const { decrypt } = require('../../utils/crypto')
 
+// 缓存有效期（毫秒）
+const CACHE_TTL = 30 * 1000  // 30 秒
+
 Page({
   data: {
     configured: false,
@@ -29,13 +32,27 @@ Page({
     }
   },
 
+  // 内存级缓存时间戳
+  _apiCacheTime: 0,
+  _cloudCacheTime: 0,
+
   onLoad() {
     this.setToday()
   },
 
   onShow() {
-    this.checkConfig()
-    this.checkCloudConfig()
+    // 两个监控并行发起，不再串行等待
+    this.loadAll()
+  },
+
+  // 并行加载 API 监控 + 云服务监控
+  loadAll() {
+    const p1 = this.checkConfig()
+    const p2 = this.checkCloudConfig()
+    // 不需要 await，两个请求同时飞
+    Promise.all([p1, p2]).catch(err => {
+      console.error('loadAll 异常:', err)
+    })
   },
 
   setToday() {
@@ -47,7 +64,7 @@ Page({
     this.setData({ today })
   },
 
-  checkConfig() {
+  async checkConfig() {
     const config = getData('apiConfig', null)
     const credentials = getData('apiCredentials', null)
     const hasCred = !!(credentials && credentials.email && credentials.password)
@@ -57,21 +74,79 @@ Page({
         configured: true,
         apiConfig: config || {}
       })
+
+      // 缓存命中：30 秒内不重新请求
+      if (this.data.summary && (Date.now() - this._apiCacheTime < CACHE_TTL)) {
+        console.log('[API缓存] 命中，跳过请求')
+        return
+      }
+
       // 如果没有 cookie 但有凭证，先登录
       if (!config || !config.cookie) {
         this.setData({ loading: true })
-        this.loginWithCredentials().then((ok) => {
-          if (ok) {
-            this.fetchDashboard()
-          } else {
-            this.setData({ loading: false })
-          }
-        })
+        const ok = await this.loginWithCredentials()
+        if (ok) {
+          await this.fetchDashboard()
+        } else {
+          this.setData({ loading: false })
+        }
       } else {
-        this.fetchDashboard()
+        // 有 cookie —— 先检查 token 是否快过期，提前刷新避免 401 重试
+        await this.ensureTokenFresh()
+        await this.fetchDashboard()
       }
     } else {
       this.setData({ configured: false, loading: false })
+    }
+  },
+
+  // 预检 token：如果即将过期（< 5 分钟），提前刷新
+  async ensureTokenFresh() {
+    const apiConfig = this.data.apiConfig
+    if (!apiConfig || !apiConfig.cookie) return
+
+    try {
+      const checkRes = await new Promise((resolve) => {
+        wx.cloud.callFunction({
+          name: 'apiProxy',
+          data: { action: 'checkToken', cookie: apiConfig.cookie },
+          success: (r) => resolve(r.result || {}),
+          fail: () => resolve({ success: false })
+        })
+      })
+
+      // token 还有超过 5 分钟，不需要刷新
+      if (checkRes.success && checkRes.remaining > 300) {
+        return
+      }
+
+      console.log('[Token预检] 即将过期(剩余' + (checkRes.remaining || 0) + 's)，提前刷新')
+
+      // 尝试用 refresh_token 刷新
+      const refreshRes = await new Promise((resolve) => {
+        wx.cloud.callFunction({
+          name: 'apiProxy',
+          data: { action: 'refreshToken', cookie: apiConfig.cookie },
+          success: (r) => resolve(r.result || {}),
+          fail: () => resolve({ success: false })
+        })
+      })
+
+      if (refreshRes.success && refreshRes.cookie) {
+        const config = getData('apiConfig', {})
+        config.cookie = refreshRes.cookie
+        config.updatedAt = new Date().toISOString()
+        wx.setStorageSync('apiConfig', config)
+        this.setData({ apiConfig: config })
+        console.log('[Token预检] 刷新成功')
+      } else if (refreshRes.needReLogin) {
+        // refresh_token 也过期了，尝试用密码重新登录
+        console.log('[Token预检] refresh_token 失效，尝试密码登录')
+        await this.loginWithCredentials()
+      }
+    } catch (err) {
+      console.error('[Token预检] 异常:', err)
+      // 预检失败不阻塞，后续请求会走 401 重试兜底
     }
   },
 
@@ -79,8 +154,9 @@ Page({
     this.setData({ loading: true })
 
     try {
-      // 只获取概览数据（包含模型分布）
       await this.fetchSummary()
+      // 请求成功，更新缓存时间戳
+      this._apiCacheTime = Date.now()
     } catch (err) {
       console.error('仪表盘数据获取失败:', err)
     }
@@ -240,11 +316,18 @@ Page({
     wx.navigateTo({ url: '/pages/cloudmonitor/cloudmonitor' })
   },
 
-  checkCloudConfig() {
+  async checkCloudConfig() {
     const config = getData('cloudConfig', null)
     if (config && config.secretId && config.secretKey) {
       this.setData({ cloudConfigured: true })
-      this.fetchCloudDashboard()
+
+      // 缓存命中：30 秒内不重新请求
+      if (this.data.cloudData.status !== '--' && (Date.now() - this._cloudCacheTime < CACHE_TTL)) {
+        console.log('[云监控缓存] 命中，跳过请求')
+        return
+      }
+
+      await this.fetchCloudDashboard()
     } else {
       this.setData({ cloudConfigured: false })
     }
@@ -309,6 +392,8 @@ Page({
           cloudLoading: false,
           cloudLastUpdate: formatDate(new Date(), 'HH:mm')
         })
+        // 更新缓存时间戳
+        this._cloudCacheTime = Date.now()
       } else {
         this.setData({ cloudLoading: false })
       }
