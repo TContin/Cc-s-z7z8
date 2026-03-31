@@ -80,16 +80,8 @@ exports.main = async (event) => {
   // 去掉末尾斜杠
   const baseUrl = serverUrl.replace(/\/+$/, '')
 
-  // 推算配置 API 地址（同一服务器的 9100 端口）
-  // serverUrl 可能是 https://openclaw.contin.online 或 http://43.133.49.144:18789
-  let configApiBase = ''
-  try {
-    const u = new URL(baseUrl)
-    // 配置 API 跑在同一台服务器的 9100 端口，通过 Nginx 反代或直接 IP 访问
-    configApiBase = `http://${u.hostname}:9100`
-  } catch (e) {
-    configApiBase = ''
-  }
+  // 配置 API 地址：通过 Nginx 反代 /oc-api/ 访问（同一域名）
+  const configApiBase = `${baseUrl}/oc-api`
 
   // OpenClaw Gateway 认证
   const headers = {}
@@ -104,14 +96,22 @@ exports.main = async (event) => {
   }
 
   // 辅助函数：优先从配置 API 获取数据
-  async function fetchFromConfigApi(path) {
+  async function fetchFromConfigApi(apiPath) {
     if (!configApiBase) return null
     try {
-      const res = await httpRequest(`${configApiBase}${path}`, { headers: configHeaders })
-      if (isValidJsonData(res) && res.data && res.data.success) {
-        return res.data.data
+      const url = `${configApiBase}${apiPath}`
+      const res = await httpRequest(url, { headers: configHeaders })
+      if (res.statusCode === 200 && res.data && !res.data._isHtml) {
+        // 配置 API 返回 { success: true, data: [...] }
+        if (res.data.success && res.data.data !== undefined) {
+          return res.data.data
+        }
+        // 也兼容直接返回数据的情况
+        return res.data
       }
-    } catch (e) {}
+    } catch (e) {
+      // 配置 API 不可用，静默失败
+    }
     return null
   }
 
