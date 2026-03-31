@@ -515,6 +515,18 @@ Page({
     wx.navigateTo({ url: '/pages/openclaw/dashboard/dashboard' })
   },
 
+  goOpenClawSessions() {
+    wx.navigateTo({ url: '/pages/openclaw/sessions/sessions' })
+  },
+
+  goOpenClawStats() {
+    wx.navigateTo({ url: '/pages/openclaw/stats/stats' })
+  },
+
+  goOpenClawModels() {
+    wx.navigateTo({ url: '/pages/openclaw/models/models' })
+  },
+
   goOpenClawConfig() {
     wx.navigateTo({ url: '/pages/openclaw/config/config' })
   }

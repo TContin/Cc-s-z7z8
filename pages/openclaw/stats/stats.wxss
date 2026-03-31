@@ -1,0 +1,106 @@
+.page-oc-stats { background: var(--bg-page, #F2F2F7); min-height: 100vh; }
+.nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--bg-page, #F2F2F7); }
+.nav-bar-inner { display: flex; align-items: center; height: 88rpx; padding: 0 24rpx; }
+.nav-back { width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center; }
+.nav-back-icon { font-size: 44rpx; color: var(--text-primary); font-weight: 300; }
+.nav-title { flex: 1; text-align: center; font-size: 32rpx; font-weight: 600; color: var(--text-primary); }
+.nav-placeholder { width: 64rpx; }
+.content-scroll { position: fixed; left: 0; right: 0; bottom: 0; padding: 16rpx 24rpx; box-sizing: border-box; }
+
+/* 汇总 */
+.summary-card {
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%);
+  border-radius: 24rpx; padding: 28rpx 16rpx; margin-bottom: 16rpx;
+}
+.summary-row { display: flex; }
+.summary-item { flex: 1; text-align: center; }
+.summary-val { display: block; font-size: 40rpx; font-weight: 700; color: #fff; }
+.summary-item.main .summary-val { font-size: 44rpx; }
+.summary-label { display: block; font-size: 22rpx; color: rgba(255,255,255,0.7); margin-top: 4rpx; }
+
+/* Tab 切换 */
+.tab-bar {
+  display: flex; background: var(--bg-card, #fff);
+  border-radius: 16rpx; padding: 6rpx; margin-bottom: 16rpx;
+}
+.tab-item {
+  flex: 1; text-align: center; padding: 14rpx 0;
+  border-radius: 12rpx; transition: all 0.2s;
+}
+.tab-item.active { background: #FF6B35; }
+.tab-text { font-size: 26rpx; font-weight: 500; color: var(--text-primary); }
+.tab-item.active .tab-text { color: #fff; }
+
+/* 图表卡片 */
+.chart-card {
+  background: var(--bg-card, #fff); border-radius: 24rpx;
+  margin-bottom: 16rpx; overflow: hidden;
+}
+.chart-header { padding: 20rpx 24rpx 8rpx; }
+.chart-title { font-size: 26rpx; font-weight: 600; color: var(--text-primary); }
+
+.chart-body { padding: 16rpx 16rpx 20rpx; }
+.chart-area {
+  display: flex; align-items: flex-end; gap: 8rpx;
+  height: 240rpx; padding-bottom: 8rpx;
+}
+.chart-bar-group {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; min-width: 0;
+}
+.chart-bar-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  width: 100%; gap: 2rpx; justify-content: flex-end;
+  height: 200rpx;
+}
+.chart-bar {
+  width: 60%; border-radius: 4rpx 4rpx 0 0;
+  min-height: 4rpx; transition: height 0.3s;
+}
+.chart-bar.input { background: #007AFF; }
+.chart-bar.output { background: #FF9500; }
+.chart-bar.msg { background: #FF6B35; }
+
+.chart-bar-label {
+  font-size: 16rpx; color: var(--text-hint);
+  margin-top: 8rpx; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%; text-align: center;
+}
+
+.chart-legend { display: flex; justify-content: center; gap: 24rpx; margin-top: 12rpx; }
+.legend-item { display: flex; align-items: center; gap: 6rpx; }
+.legend-dot { width: 14rpx; height: 14rpx; border-radius: 3rpx; }
+.legend-dot.input { background: #007AFF; }
+.legend-dot.output { background: #FF9500; }
+.legend-text { font-size: 20rpx; color: var(--text-hint); }
+
+.chart-empty { padding: 60rpx 0; text-align: center; }
+.chart-empty-text { font-size: 24rpx; color: var(--text-hint); }
+
+/* 详细数据 */
+.detail-card {
+  background: var(--bg-card, #fff); border-radius: 24rpx;
+  overflow: hidden; margin-bottom: 16rpx;
+}
+.detail-header { padding: 20rpx 24rpx 8rpx; }
+.detail-title { font-size: 26rpx; font-weight: 600; color: var(--text-primary); }
+.detail-table-header {
+  display: flex; padding: 12rpx 24rpx;
+  border-bottom: 1rpx solid var(--separator, #E5E5EA);
+}
+.detail-th {
+  flex: 1; font-size: 22rpx; color: var(--text-hint);
+  font-weight: 500; text-align: right;
+}
+.detail-th.date { text-align: left; flex: 1.5; }
+.detail-row {
+  display: flex; padding: 14rpx 24rpx;
+  border-bottom: 1rpx solid var(--separator, #E5E5EA);
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-td {
+  flex: 1; font-size: 24rpx; color: var(--text-primary);
+  text-align: right;
+}
+.detail-td.date { text-align: left; flex: 1.5; color: var(--text-hint); }

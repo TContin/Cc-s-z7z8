@@ -188,38 +188,23 @@
       </view>
 
       <!-- ===== OpenClaw 监控仪表盘 ===== -->
-      <view class="openclaw-card" wx:if="{{openclawConfigured}}" bindtap="goOpenClawDashboard">
-        <view class="card-header">
+      <view class="openclaw-card" wx:if="{{openclawConfigured}}">
+        <view class="card-header" bindtap="goOpenClawDashboard">
           <view class="openclaw-title-wrap">
             <text class="card-title">🦞 OpenClaw</text>
           </view>
           <text class="card-loading-hint" wx:if="{{openclawLoading}}">加载中...</text>
         </view>
 
-        <!-- 三个 Item 横排 -->
+        <!-- 三个 Item 横排（各自可点击） -->
         <view class="dash-row">
-          <!-- Item 1: Gateway 状态 -->
-          <view class="dash-item">
-            <view class="dash-item-header">
-              <text class="dash-icon">🔗</text>
-              <text class="dash-label">Gateway</text>
-            </view>
-            <text class="dash-value {{openclawData.gatewayStatus === '运行中' || openclawData.gatewayStatus === '正常' ? 'openclaw-primary' : ''}}">{{openclawData.gatewayStatus || '--'}}</text>
-            <view class="dash-sub-row">
-              <text class="dash-sub">模型 {{openclawData.totalModels || '--'}} 个</text>
-            </view>
-          </view>
-
-          <!-- 分割线 -->
-          <view class="dash-divider"></view>
-
-          <!-- Item 2: 会话/消息（如有数据） -->
-          <view class="dash-item">
+          <!-- Item 1: 会话 → 点击跳转会话列表 -->
+          <view class="dash-item" bindtap="goOpenClawSessions">
             <view class="dash-item-header">
               <text class="dash-icon">💬</text>
               <text class="dash-label">会话</text>
             </view>
-            <text class="dash-value">{{openclawData.totalSessions || '--'}}</text>
+            <text class="dash-value openclaw-primary">{{openclawData.totalSessions || '--'}}</text>
             <view class="dash-sub-row">
               <text class="dash-sub">消息 {{openclawData.totalMessages || '--'}}</text>
             </view>
@@ -228,11 +213,27 @@
           <!-- 分割线 -->
           <view class="dash-divider"></view>
 
-          <!-- Item 3: 模型列表 -->
-          <view class="dash-item dash-item-models">
+          <!-- Item 2: 消息/Token → 点击跳转消息趋势 -->
+          <view class="dash-item" bindtap="goOpenClawStats">
+            <view class="dash-item-header">
+              <text class="dash-icon">📊</text>
+              <text class="dash-label">Token</text>
+            </view>
+            <text class="dash-value">{{openclawData.totalTokens || '--'}}</text>
+            <view class="dash-sub-row">
+              <text class="dash-sub">入 {{openclawData.inputTokens || '--'}}</text>
+              <text class="dash-sub">出 {{openclawData.outputTokens || '--'}}</text>
+            </view>
+          </view>
+
+          <!-- 分割线 -->
+          <view class="dash-divider"></view>
+
+          <!-- Item 3: 模型 → 点击跳转模型管理 -->
+          <view class="dash-item dash-item-models" bindtap="goOpenClawModels">
             <view class="dash-item-header">
               <text class="dash-icon">🤖</text>
-              <text class="dash-label">可用模型</text>
+              <text class="dash-label">模型 {{openclawData.totalModels || '--'}}</text>
             </view>
             <view class="model-list" wx:if="{{openclawModels.length > 0}}">
               <view class="model-mini-item" wx:for="{{openclawModels}}" wx:key="name" wx:if="{{index < 4}}">
@@ -247,26 +248,8 @@
           </view>
         </view>
 
-        <!-- Token 速览（如有数据则展示） -->
-        <view class="cost-section openclaw-token-section" wx:if="{{openclawData.totalTokens !== '--' || openclawData.totalCost !== '--'}}">
-          <view class="cost-row">
-            <view class="cost-item">
-              <text class="cost-label">输入 Token</text>
-              <text class="cost-value">{{openclawData.inputTokens || '--'}}</text>
-            </view>
-            <view class="cost-item">
-              <text class="cost-label">输出 Token</text>
-              <text class="cost-value">{{openclawData.outputTokens || '--'}}</text>
-            </view>
-            <view class="cost-item">
-              <text class="cost-label">费用</text>
-              <text class="cost-value openclaw-cost">{{openclawData.totalCost || '--'}}</text>
-            </view>
-          </view>
-        </view>
-
         <!-- 底部提示 -->
-        <view class="openclaw-footer">
+        <view class="openclaw-footer" bindtap="goOpenClawDashboard">
           <text class="dash-footer-text" wx:if="{{openclawLastUpdate}}">{{openclawLastUpdate}} 更新</text>
           <text class="dash-footer-text" wx:else>实时监控</text>
           <text class="dash-footer-arrow">查看详情 ›</text>

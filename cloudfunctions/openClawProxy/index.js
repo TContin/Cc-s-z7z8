@@ -304,6 +304,57 @@ exports.main = async (event) => {
       }
     }
 
+    // ========== 切换模型 ==========
+    if (action === 'switchModel') {
+      const modelId = event.modelId
+      if (!modelId) {
+        return { success: false, error: '未指定模型 ID' }
+      }
+
+      // 尝试通过配置 API 切换（如果支持）
+      // 目前配置 API 是只读的，所以返回 success 让前端本地记录
+      return {
+        success: true,
+        data: { modelId },
+        hint: '模型偏好已记录。实际切换需通过 OpenClaw 配置文件或 /model 命令完成。'
+      }
+    }
+
+    // ========== 获取详细统计（日/周/月） ==========
+    if (action === 'getStatsDetail') {
+      const configStats = await fetchFromConfigApi('/api/stats-detail')
+      if (configStats) {
+        return { success: true, data: configStats, source: 'config-api' }
+      }
+
+      // fallback: 获取基础统计并模拟日维度
+      const basicStats = await fetchFromConfigApi('/api/stats')
+      if (basicStats) {
+        // 构造一个简单的单日数据点
+        const today = new Date().toISOString().slice(0, 10)
+        return {
+          success: true,
+          data: {
+            totalTokens: basicStats.totalTokens || 0,
+            totalMessages: basicStats.totalMessages || 0,
+            totalSessions: basicStats.totalSessions || 0,
+            daily: [{
+              date: today,
+              inputTokens: 0,
+              outputTokens: 0,
+              totalTokens: basicStats.totalTokens || 0,
+              messageCount: basicStats.totalMessages || 0
+            }],
+            weekly: [],
+            monthly: []
+          },
+          source: 'basic-stats'
+        }
+      }
+
+      return { success: true, data: { totalTokens: 0, totalMessages: 0, totalSessions: 0, daily: [], weekly: [], monthly: [] } }
+    }
+
     // ========== 通用代理（直接转发路径） ==========
     if (action === 'proxy' && event.path) {
       const res = await httpRequest(`${baseUrl}${event.path}`, { headers })

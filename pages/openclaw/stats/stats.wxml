@@ -1,0 +1,113 @@
+<view class="page-oc-stats">
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar-inner">
+      <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+      <text class="nav-title">📊 消息统计</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="content-scroll" style="top: {{navBarHeight}}px;">
+
+    <!-- 汇总数据 -->
+    <view class="summary-card">
+      <view class="summary-row">
+        <view class="summary-item main">
+          <text class="summary-val">{{summary.totalTokens}}</text>
+          <text class="summary-label">总 Token</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-val">{{summary.totalMessages}}</text>
+          <text class="summary-label">总消息</text>
+        </view>
+        <view class="summary-item">
+          <text class="summary-val">{{summary.totalSessions}}</text>
+          <text class="summary-label">总会话</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 时间维度切换 -->
+    <view class="tab-bar">
+      <view class="tab-item {{tab === 'daily' ? 'active' : ''}}" bindtap="switchTab" data-tab="daily">
+        <text class="tab-text">日</text>
+      </view>
+      <view class="tab-item {{tab === 'weekly' ? 'active' : ''}}" bindtap="switchTab" data-tab="weekly">
+        <text class="tab-text">周</text>
+      </view>
+      <view class="tab-item {{tab === 'monthly' ? 'active' : ''}}" bindtap="switchTab" data-tab="monthly">
+        <text class="tab-text">月</text>
+      </view>
+    </view>
+
+    <!-- Token 柱状图 -->
+    <view class="chart-card">
+      <view class="chart-header">
+        <text class="chart-title">Token 消耗趋势</text>
+      </view>
+      <view class="chart-body" wx:if="{{chartData.length > 0}}">
+        <view class="chart-area">
+          <view class="chart-bar-group" wx:for="{{chartData}}" wx:key="date">
+            <view class="chart-bar-wrap">
+              <view class="chart-bar input" style="height: {{item.inputHeight}}rpx;" wx:if="{{item.inputHeight > 0}}"></view>
+              <view class="chart-bar output" style="height: {{item.outputHeight}}rpx;" wx:if="{{item.outputHeight > 0}}"></view>
+            </view>
+            <text class="chart-bar-label">{{item.shortDate}}</text>
+          </view>
+        </view>
+        <view class="chart-legend">
+          <view class="legend-item">
+            <view class="legend-dot input"></view>
+            <text class="legend-text">输入</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-dot output"></view>
+            <text class="legend-text">输出</text>
+          </view>
+        </view>
+      </view>
+      <view class="chart-empty" wx:else>
+        <text class="chart-empty-text">暂无趋势数据</text>
+      </view>
+    </view>
+
+    <!-- 消息量柱状图 -->
+    <view class="chart-card">
+      <view class="chart-header">
+        <text class="chart-title">消息量趋势</text>
+      </view>
+      <view class="chart-body" wx:if="{{chartData.length > 0}}">
+        <view class="chart-area">
+          <view class="chart-bar-group" wx:for="{{chartData}}" wx:key="date">
+            <view class="chart-bar-wrap">
+              <view class="chart-bar msg" style="height: {{item.msgHeight}}rpx;" wx:if="{{item.msgHeight > 0}}"></view>
+            </view>
+            <text class="chart-bar-label">{{item.shortDate}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="chart-empty" wx:else>
+        <text class="chart-empty-text">暂无趋势数据</text>
+      </view>
+    </view>
+
+    <!-- 详细数据列表 -->
+    <view class="detail-card" wx:if="{{chartData.length > 0}}">
+      <view class="detail-header">
+        <text class="detail-title">详细数据</text>
+      </view>
+      <view class="detail-table-header">
+        <text class="detail-th date">日期</text>
+        <text class="detail-th">消息</text>
+        <text class="detail-th">Token</text>
+      </view>
+      <view class="detail-row" wx:for="{{chartData}}" wx:key="date">
+        <text class="detail-td date">{{item.date}}</text>
+        <text class="detail-td">{{item.messageCount}}</text>
+        <text class="detail-td">{{item.totalTokensText}}</text>
+      </view>
+    </view>
+
+    <view style="height: 60rpx;"></view>
+  </scroll-view>
+</view>

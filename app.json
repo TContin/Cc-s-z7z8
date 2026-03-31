@@ -22,7 +22,8 @@
     "pages/openclaw/dashboard/dashboard",
     "pages/openclaw/models/models",
     "pages/openclaw/sessions/sessions",
-    "pages/openclaw/platform/platform"
+    "pages/openclaw/platform/platform",
+    "pages/openclaw/stats/stats"
   ],
   "window": {
     "navigationBarBackgroundColor": "#F2F2F7",

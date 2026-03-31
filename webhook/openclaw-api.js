@@ -260,6 +260,125 @@ function getStats() {
   return { totalTokens, totalMessages, totalSessions, avgResponseMs: 0 }
 }
 
+// 获取详细统计（日/周/月维度）
+function getStatsDetail() {
+  const agentsDir = path.join(OPENCLAW_HOME, 'agents')
+  const dayMap = {} // { "2026-03-31": { inputTokens, outputTokens, totalTokens, messageCount } }
+  let totalTokens = 0, totalMessages = 0, totalSessions = 0
+
+  try {
+    const dirs = fs.readdirSync(agentsDir).filter(d =>
+      fs.statSync(path.join(agentsDir, d)).isDirectory()
+    )
+
+    dirs.forEach(agentId => {
+      // 统计会话数
+      const sessionsFile = path.join(agentsDir, agentId, 'sessions', 'sessions.json')
+      const sessions = readJsonFile(sessionsFile)
+      if (sessions && typeof sessions === 'object') {
+        totalSessions += Object.keys(sessions).length
+        Object.values(sessions).forEach(s => {
+          if (s.totalTokens) totalTokens += s.totalTokens
+        })
+      }
+
+      // 扫描 JSONL 日志文件
+      const sessionsDir = path.join(agentsDir, agentId, 'sessions')
+      try {
+        const files = fs.readdirSync(sessionsDir).filter(f =>
+          f.endsWith('.jsonl') && !f.includes('.deleted.')
+        )
+
+        files.forEach(f => {
+          try {
+            const content = fs.readFileSync(path.join(sessionsDir, f), 'utf-8')
+            const lines = content.split('\n').filter(l => l.trim())
+
+            lines.forEach(line => {
+              try {
+                const obj = JSON.parse(line)
+                if (obj.type !== 'message') return
+
+                totalMessages++
+
+                // 提取日期
+                let date = ''
+                if (obj.timestamp) {
+                  const ts = typeof obj.timestamp === 'number'
+                    ? (obj.timestamp < 1e12 ? obj.timestamp * 1000 : obj.timestamp)
+                    : new Date(obj.timestamp).getTime()
+                  date = new Date(ts).toISOString().slice(0, 10)
+                }
+                if (!date) return
+
+                if (!dayMap[date]) {
+                  dayMap[date] = { inputTokens: 0, outputTokens: 0, totalTokens: 0, messageCount: 0 }
+                }
+
+                dayMap[date].messageCount++
+
+                // Token 统计（只统计 assistant 消息的 usage）
+                if (obj.role === 'assistant' && obj.usage) {
+                  const u = obj.usage
+                  dayMap[date].inputTokens += u.input || u.inputTokens || u.prompt_tokens || 0
+                  dayMap[date].outputTokens += u.output || u.outputTokens || u.completion_tokens || 0
+                  dayMap[date].totalTokens += u.totalTokens || u.total_tokens || ((u.input || 0) + (u.output || 0))
+                }
+              } catch (e) {}
+            })
+          } catch (e) {}
+        })
+      } catch (e) {}
+    })
+  } catch (e) {}
+
+  // 转为数组并排序
+  const daily = Object.entries(dayMap)
+    .map(([date, d]) => ({ date, ...d }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+
+  // 聚合为周数据
+  const weekMap = {}
+  daily.forEach(d => {
+    const dt = new Date(d.date)
+    const day = dt.getDay()
+    const monday = new Date(dt)
+    monday.setDate(dt.getDate() - ((day + 6) % 7))
+    const weekKey = monday.toISOString().slice(0, 10)
+
+    if (!weekMap[weekKey]) {
+      weekMap[weekKey] = { inputTokens: 0, outputTokens: 0, totalTokens: 0, messageCount: 0 }
+    }
+    weekMap[weekKey].inputTokens += d.inputTokens
+    weekMap[weekKey].outputTokens += d.outputTokens
+    weekMap[weekKey].totalTokens += d.totalTokens
+    weekMap[weekKey].messageCount += d.messageCount
+  })
+
+  const weekly = Object.entries(weekMap)
+    .map(([date, d]) => ({ date, ...d }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+
+  // 聚合为月数据
+  const monthMap = {}
+  daily.forEach(d => {
+    const monthKey = d.date.slice(0, 7)
+    if (!monthMap[monthKey]) {
+      monthMap[monthKey] = { inputTokens: 0, outputTokens: 0, totalTokens: 0, messageCount: 0 }
+    }
+    monthMap[monthKey].inputTokens += d.inputTokens
+    monthMap[monthKey].outputTokens += d.outputTokens
+    monthMap[monthKey].totalTokens += d.totalTokens
+    monthMap[monthKey].messageCount += d.messageCount
+  })
+
+  const monthly = Object.entries(monthMap)
+    .map(([date, d]) => ({ date, ...d }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+
+  return { totalTokens, totalMessages, totalSessions, daily, weekly, monthly }
+}
+
 // HTTP 服务器
 const server = http.createServer((req, res) => {
   // CORS
@@ -318,6 +437,11 @@ const server = http.createServer((req, res) => {
   if (pathname === '/api/stats') {
     const stats = getStats()
     return jsonResponse(res, { success: true, data: stats })
+  }
+
+  if (pathname === '/api/stats-detail') {
+    const detail = getStatsDetail()
+    return jsonResponse(res, { success: true, data: detail })
   }
 
   jsonResponse(res, { error: 'not found' }, 404)
