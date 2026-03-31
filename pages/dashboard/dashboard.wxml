@@ -187,6 +187,103 @@
         </view>
       </view>
 
+      <!-- ===== OpenClaw 监控仪表盘 ===== -->
+      <view class="openclaw-card" wx:if="{{openclawConfigured}}" bindtap="goOpenClawConfig">
+        <view class="card-header">
+          <view class="openclaw-title-wrap">
+            <text class="card-title">🦞 OpenClaw</text>
+          </view>
+          <text class="card-loading-hint" wx:if="{{openclawLoading}}">加载中...</text>
+        </view>
+
+        <!-- 三个 Item 横排 -->
+        <view class="dash-row">
+          <!-- Item 1: 会话 -->
+          <view class="dash-item">
+            <view class="dash-item-header">
+              <text class="dash-icon">💬</text>
+              <text class="dash-label">会话</text>
+            </view>
+            <text class="dash-value openclaw-primary">{{openclawData.totalSessions || '--'}}</text>
+            <view class="dash-sub-row">
+              <text class="dash-sub">活跃 {{openclawData.activeSessions || '--'}}</text>
+            </view>
+          </view>
+
+          <!-- 分割线 -->
+          <view class="dash-divider"></view>
+
+          <!-- Item 2: 消息量 -->
+          <view class="dash-item">
+            <view class="dash-item-header">
+              <text class="dash-icon">📨</text>
+              <text class="dash-label">消息量</text>
+            </view>
+            <text class="dash-value">{{openclawData.totalMessages || '--'}}</text>
+            <view class="dash-sub-row">
+              <text class="dash-sub">Token {{openclawData.totalTokens || '--'}}</text>
+            </view>
+          </view>
+
+          <!-- 分割线 -->
+          <view class="dash-divider"></view>
+
+          <!-- Item 3: 模型分布 -->
+          <view class="dash-item dash-item-models">
+            <view class="dash-item-header">
+              <text class="dash-icon">🤖</text>
+              <text class="dash-label">模型分布</text>
+            </view>
+            <view class="model-list" wx:if="{{openclawModels.length > 0}}">
+              <view class="model-mini-item" wx:for="{{openclawModels}}" wx:key="name" wx:if="{{index < 4}}">
+                <view class="model-dot" style="background: {{item.color}};"></view>
+                <text class="model-mini-name">{{item.name}}</text>
+                <text class="model-mini-count">{{item.messages}}次</text>
+              </view>
+              <view class="model-mini-item more" wx:if="{{openclawModels.length > 4}}">
+                <text class="model-mini-name more-text">+{{openclawModels.length - 4}} 更多</text>
+              </view>
+            </view>
+            <text class="dash-value" wx:else>--</text>
+          </view>
+        </view>
+
+        <!-- Token 速览 -->
+        <view class="cost-section openclaw-token-section">
+          <view class="cost-row">
+            <view class="cost-item">
+              <text class="cost-label">输入 Token</text>
+              <text class="cost-value">{{openclawData.inputTokens || '--'}}</text>
+            </view>
+            <view class="cost-item">
+              <text class="cost-label">输出 Token</text>
+              <text class="cost-value">{{openclawData.outputTokens || '--'}}</text>
+            </view>
+            <view class="cost-item">
+              <text class="cost-label">费用</text>
+              <text class="cost-value openclaw-cost">{{openclawData.totalCost || '--'}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 底部提示 -->
+        <view class="openclaw-footer">
+          <text class="dash-footer-text" wx:if="{{openclawLastUpdate}}">{{openclawLastUpdate}} 更新</text>
+          <text class="dash-footer-text" wx:else>实时监控</text>
+          <text class="dash-footer-arrow">配置 ›</text>
+        </view>
+      </view>
+
+      <!-- OpenClaw 未配置提示 -->
+      <view class="openclaw-card openclaw-empty" wx:if="{{!openclawConfigured}}" bindtap="goOpenClawConfig">
+        <view class="card-header">
+          <text class="card-title">🦞 OpenClaw</text>
+        </view>
+        <view class="cloud-empty-body">
+          <text class="cloud-empty-text">尚未配置，点击前往设置</text>
+        </view>
+      </view>
+
       <!-- 无数据（API已配置但拿不到数据且不在加载中） -->
       <view class="no-data" wx:if="{{!summary && !loading}}">
         <text class="no-data-icon">📊</text>

@@ -426,3 +426,42 @@
   text-align: center;
   padding: 0 40rpx;
 }
+
+/* ===== OpenClaw 监控卡片 ===== */
+.openclaw-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16rpx;
+}
+
+.openclaw-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.openclaw-primary {
+  color: #FF6B35 !important;
+}
+
+.openclaw-cost {
+  color: #FF6B35 !important;
+}
+
+.openclaw-token-section {
+  border-top: 1rpx solid var(--separator);
+}
+
+.openclaw-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  border-top: 1rpx solid var(--separator);
+  background: rgba(255, 107, 53, 0.03);
+}
+
+.openclaw-empty {
+  cursor: pointer;
+}

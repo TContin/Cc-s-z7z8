@@ -17,7 +17,8 @@
     "pages/cloudmonitor/cloudmonitor",
     "pages/cloudmonitor/config/config",
     "pages/notes/notes",
-    "pages/notes/edit/edit"
+    "pages/notes/edit/edit",
+    "pages/openclaw/config/config"
   ],
   "window": {
     "navigationBarBackgroundColor": "#F2F2F7",

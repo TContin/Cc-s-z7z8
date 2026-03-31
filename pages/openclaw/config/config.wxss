@@ -1,0 +1,80 @@
+.page-config {
+  padding: 32rpx;
+}
+
+.section {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+}
+
+.section-desc {
+  font-size: 24rpx;
+  color: var(--text-hint);
+  margin-bottom: 32rpx;
+  line-height: 1.5;
+}
+
+.form-group {
+  margin-bottom: 28rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12rpx;
+}
+
+.form-input {
+  background: var(--bg-secondary, #F2F2F7);
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.form-hint {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-hint);
+  margin-top: 8rpx;
+}
+
+.btn-group {
+  margin-bottom: 20rpx;
+}
+
+.btn-test {
+  background: var(--bg-card) !important;
+  color: var(--primary) !important;
+  border: 2rpx solid var(--primary) !important;
+  border-radius: 16rpx !important;
+  font-size: 28rpx !important;
+  font-weight: 600 !important;
+  margin-bottom: 16rpx !important;
+}
+
+.btn-save {
+  background: #FF6B35 !important;
+  color: #fff !important;
+  border-radius: 16rpx !important;
+  font-size: 28rpx !important;
+  font-weight: 600 !important;
+}
+
+.btn-clear {
+  background: transparent !important;
+  color: #FF3B30 !important;
+  font-size: 26rpx !important;
+  font-weight: 500 !important;
+}

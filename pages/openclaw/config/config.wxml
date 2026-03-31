@@ -1,0 +1,44 @@
+<view class="page-config">
+  <view class="section">
+    <view class="section-title">服务器配置</view>
+    <view class="section-desc">OpenClaw Dashboard 部署在你的腾讯云服务器上，请输入访问地址。</view>
+
+    <view class="form-group">
+      <text class="form-label">服务器地址 *</text>
+      <input
+        class="form-input"
+        placeholder="例如: http://1.2.3.4:3000"
+        value="{{serverUrl}}"
+        bindinput="onServerUrlInput"
+      />
+      <text class="form-hint">你的 OpenClaw Dashboard 地址（含端口号）</text>
+    </view>
+
+    <view class="form-group">
+      <text class="form-label">API Token（可选）</text>
+      <input
+        class="form-input"
+        placeholder="如果 Dashboard 需要认证"
+        value="{{apiToken}}"
+        bindinput="onApiTokenInput"
+        password="{{true}}"
+      />
+      <text class="form-hint">用于 API 请求认证的 Bearer Token</text>
+    </view>
+  </view>
+
+  <view class="btn-group">
+    <button class="btn-test" bindtap="testConnection" loading="{{testing}}" disabled="{{testing}}">
+      测试连接
+    </button>
+    <button class="btn-save" bindtap="saveConfig">
+      保存配置
+    </button>
+  </view>
+
+  <view class="btn-group" wx:if="{{configured}}">
+    <button class="btn-clear" bindtap="clearConfig">
+      清除配置
+    </button>
+  </view>
+</view>

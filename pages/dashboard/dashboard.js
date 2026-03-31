@@ -29,12 +29,27 @@ Page({
       trafficPercent: 0,
       trafficUsed: '--',
       trafficTotal: '--'
-    }
+    },
+    // OpenClaw 监控
+    openclawConfigured: false,
+    openclawLoading: false,
+    openclawLastUpdate: '',
+    openclawData: {
+      totalSessions: '--',
+      activeSessions: '--',
+      totalMessages: '--',
+      totalTokens: '--',
+      inputTokens: '--',
+      outputTokens: '--',
+      totalCost: '--'
+    },
+    openclawModels: []
   },
 
   // 内存级缓存时间戳
   _apiCacheTime: 0,
   _cloudCacheTime: 0,
+  _openclawCacheTime: 0,
 
   onLoad() {
     this.setToday()
@@ -45,12 +60,13 @@ Page({
     this.loadAll()
   },
 
-  // 并行加载 API 监控 + 云服务监控
+  // 并行加载 API 监控 + 云服务监控 + OpenClaw 监控
   loadAll() {
     const p1 = this.checkConfig()
     const p2 = this.checkCloudConfig()
-    // 不需要 await，两个请求同时飞
-    Promise.all([p1, p2]).catch(err => {
+    const p3 = this.checkOpenClawConfig()
+    // 不需要 await，三个请求同时飞
+    Promise.all([p1, p2, p3]).catch(err => {
       console.error('loadAll 异常:', err)
     })
   },
@@ -401,5 +417,86 @@ Page({
       console.error('云服务监控数据获取失败:', err)
       this.setData({ cloudLoading: false })
     }
+  },
+
+  // ========== OpenClaw 监控 ==========
+  async checkOpenClawConfig() {
+    const config = getData('openclawConfig', null)
+    if (config && config.serverUrl) {
+      this.setData({ openclawConfigured: true })
+
+      // 缓存命中：30 秒内不重新请求
+      if (this.data.openclawData.totalSessions !== '--' && (Date.now() - this._openclawCacheTime < CACHE_TTL)) {
+        console.log('[OpenClaw缓存] 命中，跳过请求')
+        return
+      }
+
+      await this.fetchOpenClawDashboard()
+    } else {
+      this.setData({ openclawConfigured: false })
+    }
+  },
+
+  async fetchOpenClawDashboard() {
+    this.setData({ openclawLoading: true })
+    const config = getData('openclawConfig', null)
+    if (!config || !config.serverUrl) return
+
+    try {
+      const res = await new Promise((resolve) => {
+        wx.cloud.callFunction({
+          name: 'openClawProxy',
+          data: {
+            action: 'getDashboard',
+            serverUrl: config.serverUrl,
+            apiToken: config.apiToken || ''
+          },
+          success: (r) => resolve(r.result || {}),
+          fail: (err) => resolve({ success: false, error: err.errMsg })
+        })
+      })
+
+      if (res.success && res.data) {
+        const d = res.data
+        const sessions = d.sessions || {}
+        const messages = d.messages || {}
+        const models = d.models || []
+
+        // 模型颜色列表
+        const colors = ['#007AFF', '#FF9500', '#AF52DE', '#FF3B30', '#34C759', '#5AC8FA', '#FF2D55', '#FFCC00']
+
+        this.setData({
+          openclawData: {
+            totalSessions: (sessions.total || 0) + '',
+            activeSessions: (sessions.active || 0) + '',
+            totalMessages: (messages.total || 0) + '',
+            totalTokens: this.formatTokens(messages.tokens || 0),
+            inputTokens: this.formatTokens(messages.inputTokens || 0),
+            outputTokens: this.formatTokens(messages.outputTokens || 0),
+            totalCost: d.cost ? ('$' + Number(d.cost).toFixed(2)) : '--'
+          },
+          openclawModels: models.map((m, i) => ({
+            name: m.name || '--',
+            messages: m.messages || 0,
+            tokens: this.formatTokens(m.tokens || 0),
+            color: colors[i % colors.length]
+          })),
+          openclawLoading: false,
+          openclawLastUpdate: formatDate(new Date(), 'HH:mm')
+        })
+        // 更新缓存时间戳
+        this._openclawCacheTime = Date.now()
+      } else {
+        console.error('[OpenClaw] 数据获取失败:', res.error)
+        this.setData({ openclawLoading: false })
+      }
+    } catch (err) {
+      console.error('OpenClaw 监控数据获取失败:', err)
+      this.setData({ openclawLoading: false })
+    }
+  },
+
+  goOpenClawConfig() {
+    wx.navigateTo({ url: '/pages/openclaw/config/config' })
   }
 })
