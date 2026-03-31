@@ -41,7 +41,7 @@ Page({
         wx.cloud.callFunction({
           name: 'openClawProxy',
           data: {
-            action: 'getDashboard',
+            action: 'testConnection',
             serverUrl: serverUrl,
             apiToken: apiToken
           },

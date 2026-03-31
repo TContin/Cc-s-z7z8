@@ -55,81 +55,93 @@ exports.main = async (event) => {
   }
 
   try {
+    const apiBase = `${baseUrl}/api/v1`
+
     // ========== 获取仪表盘概览（会话 + 消息量 + 模型分布） ==========
     if (action === 'getDashboard') {
-      // 并行请求多个 API
-      const [sessionsRes, usageRes, costsRes] = await Promise.all([
-        httpRequest(`${baseUrl}/api/sessions`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
-        httpRequest(`${baseUrl}/api/usage`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
-        httpRequest(`${baseUrl}/api/costs`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message }))
+      // 并行请求: 会话列表 + 系统状态 + 健康检查
+      const [convsRes, statusRes, healthRes] = await Promise.all([
+        httpRequest(`${apiBase}/conversations`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
+        httpRequest(`${apiBase}/status`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
+        httpRequest(`${apiBase}/health`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message }))
       ])
 
-      // 解析会话数据
+      // ---- 解析会话数据 ----
       let totalSessions = 0
       let activeSessions = 0
-      let recentSessions = []
-      if (sessionsRes.statusCode === 200 && sessionsRes.data) {
-        const sessions = Array.isArray(sessionsRes.data) ? sessionsRes.data : (sessionsRes.data.sessions || sessionsRes.data.data || [])
-        totalSessions = sessions.length
-        activeSessions = sessions.filter(s => s.active || s.status === 'active').length
-        // 取最近 5 个会话
-        recentSessions = sessions.slice(0, 5).map(s => ({
-          id: s.id || s.session_id,
-          name: s.name || s.title || ('会话 ' + (s.id || '').substring(0, 6)),
-          model: s.model || s.modelId || '--',
-          messages: s.messages || s.message_count || s.messageCount || 0,
-          updatedAt: s.updated_at || s.updatedAt || s.lastActivity || ''
-        }))
-      }
-
-      // 解析用量数据
       let totalMessages = 0
       let totalTokens = 0
       let totalInputTokens = 0
       let totalOutputTokens = 0
-      let modelDistribution = []
-      if (usageRes.statusCode === 200 && usageRes.data) {
-        const usage = usageRes.data
-        totalMessages = usage.totalMessages || usage.total_messages || usage.messageCount || 0
-        totalTokens = usage.totalTokens || usage.total_tokens || 0
-        totalInputTokens = usage.inputTokens || usage.input_tokens || usage.promptTokens || 0
-        totalOutputTokens = usage.outputTokens || usage.output_tokens || usage.completionTokens || 0
+      let totalCost = 0
+      const modelMap = {} // { modelName: { messages, tokens } }
 
-        // 模型分布
-        const models = usage.modelDistribution || usage.model_distribution || usage.models || usage.byModel || []
-        if (Array.isArray(models)) {
-          modelDistribution = models.map(m => ({
-            name: m.model || m.modelId || m.name || '--',
-            messages: m.messages || m.message_count || m.count || 0,
-            tokens: m.tokens || m.total_tokens || 0,
-            cost: m.cost || m.totalCost || 0
-          }))
-        } else if (typeof models === 'object') {
-          // 如果是 { "claude-3": { messages: 10, tokens: 5000 }, ... } 格式
-          modelDistribution = Object.entries(models).map(([name, data]) => ({
-            name,
-            messages: typeof data === 'object' ? (data.messages || data.count || 0) : data,
-            tokens: typeof data === 'object' ? (data.tokens || 0) : 0,
-            cost: typeof data === 'object' ? (data.cost || 0) : 0
-          }))
+      if (convsRes.statusCode === 200 && convsRes.data) {
+        const convs = Array.isArray(convsRes.data) ? convsRes.data
+          : (convsRes.data.conversations || convsRes.data.data || [])
+        totalSessions = convs.length
+
+        for (const c of convs) {
+          // 活跃会话
+          if (c.active || c.status === 'active') activeSessions++
+
+          // 消息计数
+          const msgCount = c.messages || c.message_count || c.messageCount || c.turns || 0
+          totalMessages += msgCount
+
+          // Token 统计
+          const inTk = c.inputTokens || c.input_tokens || c.promptTokens || c.prompt_tokens || 0
+          const outTk = c.outputTokens || c.output_tokens || c.completionTokens || c.completion_tokens || 0
+          const tk = c.totalTokens || c.total_tokens || c.tokens || (inTk + outTk)
+          totalInputTokens += inTk
+          totalOutputTokens += outTk
+          totalTokens += tk
+
+          // 费用
+          const cost = c.cost || c.totalCost || c.total_cost || 0
+          totalCost += cost
+
+          // 模型分布统计
+          const model = c.model || c.modelId || c.model_id || 'unknown'
+          if (!modelMap[model]) modelMap[model] = { messages: 0, tokens: 0 }
+          modelMap[model].messages += msgCount
+          modelMap[model].tokens += tk
         }
       }
 
-      // 解析费用数据
-      let totalCost = 0
-      if (costsRes.statusCode === 200 && costsRes.data) {
-        const costs = costsRes.data
-        totalCost = costs.totalCost || costs.total_cost || costs.total || 0
+      // ---- 从 /status 补充系统级统计（如有） ----
+      if (statusRes.statusCode === 200 && statusRes.data) {
+        const st = statusRes.data
+        // 某些版本的 status 会包含汇总数据，优先使用
+        if (st.totalMessages && st.totalMessages > totalMessages) totalMessages = st.totalMessages
+        if (st.totalTokens && st.totalTokens > totalTokens) totalTokens = st.totalTokens
+        if (st.totalSessions && st.totalSessions > totalSessions) totalSessions = st.totalSessions
+        if (st.activeSessions && st.activeSessions > activeSessions) activeSessions = st.activeSessions
+        if (st.totalCost && st.totalCost > totalCost) totalCost = st.totalCost
+
+        // 如果 status 带了模型分布
+        const stModels = st.models || st.modelDistribution || st.model_distribution || null
+        if (stModels && typeof stModels === 'object' && !Array.isArray(stModels)) {
+          Object.entries(stModels).forEach(([name, data]) => {
+            if (!modelMap[name]) modelMap[name] = { messages: 0, tokens: 0 }
+            if (typeof data === 'object') {
+              modelMap[name].messages = Math.max(modelMap[name].messages, data.messages || data.count || 0)
+              modelMap[name].tokens = Math.max(modelMap[name].tokens, data.tokens || 0)
+            }
+          })
+        }
       }
+
+      // 转换 modelMap 为数组并排序
+      const modelDistribution = Object.entries(modelMap)
+        .filter(([name]) => name !== 'unknown')
+        .map(([name, data]) => ({ name, messages: data.messages, tokens: data.tokens }))
+        .sort((a, b) => b.messages - a.messages)
 
       return {
         success: true,
         data: {
-          sessions: {
-            total: totalSessions,
-            active: activeSessions,
-            recent: recentSessions
-          },
+          sessions: { total: totalSessions, active: activeSessions },
           messages: {
             total: totalMessages,
             tokens: totalTokens,
@@ -137,14 +149,25 @@ exports.main = async (event) => {
             outputTokens: totalOutputTokens
           },
           models: modelDistribution,
-          cost: totalCost
+          cost: totalCost,
+          healthy: healthRes.statusCode === 200
         }
       }
     }
 
+    // ========== 测试连接 ==========
+    if (action === 'testConnection') {
+      const res = await httpRequest(`${apiBase}/health`, { headers })
+      return {
+        success: res.statusCode === 200,
+        statusCode: res.statusCode,
+        data: res.data
+      }
+    }
+
     // ========== 获取系统状态 ==========
-    if (action === 'getSystem') {
-      const res = await httpRequest(`${baseUrl}/api/system`, { headers })
+    if (action === 'getStatus') {
+      const res = await httpRequest(`${apiBase}/status`, { headers })
       if (res.statusCode === 200) {
         return { success: true, data: res.data }
       }
