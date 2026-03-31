@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/dashboard/dashboard",
     "pages/home/home",
     "pages/password/password",
     "pages/password/add/add",
@@ -31,6 +32,12 @@
     "backgroundColor": "#F8F8F8",
     "borderStyle": "white",
     "list": [
+      {
+        "pagePath": "pages/dashboard/dashboard",
+        "text": "首页",
+        "iconPath": "assets/icons/dashboard.png",
+        "selectedIconPath": "assets/icons/dashboard-active.png"
+      },
       {
         "pagePath": "pages/home/home",
         "text": "工具箱",

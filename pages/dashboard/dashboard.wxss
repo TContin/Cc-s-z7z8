@@ -1,0 +1,417 @@
+.page-dashboard {
+  padding: 0 32rpx;
+  padding-top: calc(20rpx + env(safe-area-inset-top));
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+}
+
+/* iOS 大标题头部 */
+.header {
+  padding: 16rpx 0 24rpx;
+}
+
+.header-date {
+  font-size: 26rpx;
+  color: var(--text-hint);
+  font-weight: 400;
+}
+
+.header-greeting {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -1rpx;
+}
+
+.setup-btn {
+  width: 400rpx !important;
+  margin-top: 32rpx;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 120rpx 0;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: var(--text-hint);
+}
+
+/* ===== 仪表盘主卡片 ===== */
+.dashboard-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16rpx;
+}
+
+/* 卡片标题头（API监控/云服务监控统一样式） */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 24rpx 0;
+}
+
+.card-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dash-row {
+  display: flex;
+  padding: 28rpx 12rpx 20rpx;
+}
+
+.dash-item {
+  flex: 1;
+  padding: 0 12rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dash-item-models {
+  align-items: flex-start;
+  padding-left: 16rpx;
+}
+
+.dash-divider {
+  width: 1rpx;
+  background: var(--separator);
+  align-self: stretch;
+  margin: 8rpx 0;
+  flex-shrink: 0;
+}
+
+.dash-item-header {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-bottom: 12rpx;
+}
+
+.dash-icon {
+  font-size: 24rpx;
+}
+
+.dash-label {
+  font-size: 22rpx;
+  color: var(--text-hint);
+  font-weight: 400;
+}
+
+.dash-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6rpx;
+}
+
+.dash-value.primary {
+  color: var(--primary);
+}
+
+.dash-sub-row {
+  display: flex;
+  gap: 12rpx;
+}
+
+.dash-sub {
+  font-size: 20rpx;
+  color: var(--text-hint);
+}
+
+/* 模型分布列表 */
+.model-list {
+  width: 100%;
+}
+
+.model-mini-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 4rpx 0;
+}
+
+.model-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.model-mini-name {
+  flex: 1;
+  font-size: 22rpx;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.model-mini-count {
+  font-size: 20rpx;
+  color: var(--text-hint);
+  flex-shrink: 0;
+}
+
+.model-mini-item.more {
+  margin-top: 2rpx;
+}
+
+.more-text {
+  color: var(--text-hint) !important;
+  font-weight: 400 !important;
+  font-size: 20rpx !important;
+}
+
+/* 底部提示 */
+.dash-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  border-top: 1rpx solid var(--separator);
+  background: rgba(0, 122, 255, 0.03);
+}
+
+.dash-footer-text {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}
+
+.dash-footer-arrow {
+  font-size: 22rpx;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* ===== 云服务监控卡片 ===== */
+.cloud-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16rpx;
+}
+
+.cloud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 24rpx 0;
+}
+
+.cloud-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cloud-status {
+  font-size: 22rpx;
+  color: var(--text-hint);
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  background: rgba(0,0,0,0.04);
+}
+
+.cloud-status.running {
+  color: #34C759;
+  background: rgba(52, 199, 89, 0.1);
+}
+
+.cloud-loading {
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+.cloud-row {
+  display: flex;
+  padding: 20rpx 8rpx 16rpx;
+}
+
+.cloud-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 8rpx;
+}
+
+.cloud-divider {
+  width: 1rpx;
+  background: var(--separator);
+  align-self: stretch;
+  margin: 8rpx 0;
+  flex-shrink: 0;
+}
+
+.cloud-label {
+  font-size: 20rpx;
+  color: var(--text-hint);
+  margin-bottom: 10rpx;
+  font-weight: 400;
+}
+
+/* 圆环样式 */
+.cloud-ring-wrap {
+  margin-bottom: 8rpx;
+}
+
+.cloud-ring {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cloud-ring-inner {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cloud-ring-pct {
+  font-size: 18rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cloud-val {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cloud-sub {
+  font-size: 18rpx;
+  color: var(--text-hint);
+}
+
+/* 进度条样式 */
+.cloud-big-val {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+}
+
+.cloud-big-val.danger {
+  color: #FF3B30;
+}
+
+.cloud-unit {
+  font-size: 20rpx;
+  font-weight: 400;
+  color: var(--text-hint);
+}
+
+.cloud-bar {
+  width: 100%;
+  height: 6rpx;
+  border-radius: 3rpx;
+  background: #F0F0F0;
+  margin-top: 4rpx;
+}
+
+.cloud-bar-fill {
+  height: 100%;
+  border-radius: 3rpx;
+  background: var(--primary);
+  transition: width 0.3s;
+}
+
+.cloud-bar-fill.mem {
+  background: #AF52DE;
+}
+
+.cloud-bar-fill.danger {
+  background: #FF3B30;
+}
+
+.cloud-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  border-top: 1rpx solid var(--separator);
+  background: rgba(52, 199, 89, 0.03);
+}
+
+.cloud-empty-body {
+  padding: 32rpx 24rpx;
+  text-align: center;
+}
+
+.cloud-empty-text {
+  font-size: 24rpx;
+  color: var(--text-hint);
+}
+
+/* ===== 费用速览区域（嵌在API监控卡片内） ===== */
+.cost-section {
+  padding: 20rpx 16rpx;
+  border-top: 1rpx solid var(--separator);
+}
+
+.cost-row {
+  display: flex;
+}
+
+.cost-item {
+  flex: 1;
+  text-align: center;
+}
+
+.cost-label {
+  display: block;
+  font-size: 22rpx;
+  color: var(--text-hint);
+  margin-bottom: 8rpx;
+}
+
+.cost-value {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cost-value.success {
+  color: var(--success);
+}
+
+/* 无数据 */
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 0;
+}
+
+.no-data-icon {
+  font-size: 80rpx;
+  margin-bottom: 16rpx;
+  opacity: 0.5;
+}
+
+.no-data-text {
+  font-size: 28rpx;
+  color: var(--text-hint);
+}
+
+.no-data-sub {
+  font-size: 24rpx;
+  color: var(--text-hint);
+  text-align: center;
+  padding: 0 40rpx;
+}

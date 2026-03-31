@@ -1,0 +1,208 @@
+<view class="page-dashboard">
+  <!-- iOS 风格顶部 -->
+  <view class="header">
+    <view class="header-date">{{today}}</view>
+    <view class="header-greeting">杂七杂八</view>
+  </view>
+
+  <!-- 未配置状态 -->
+  <view class="empty-state" wx:if="{{!configured}}">
+    <text class="empty-icon">📡</text>
+    <text class="empty-text">尚未配置 API</text>
+    <text class="empty-sub">请先在工具箱中配置 API 监控</text>
+    <button class="btn-primary setup-btn" bindtap="goApiMonitor">去配置</button>
+  </view>
+
+  <block wx:else>
+    <!-- 加载中 -->
+    <view class="loading-state" wx:if="{{loading}}">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <block wx:else>
+      <!-- ===== API 监控仪表盘 ===== -->
+      <view class="dashboard-card" bindtap="goApiMonitor">
+        <!-- 标题头 -->
+        <view class="card-header">
+          <text class="card-title">API 监控</text>
+        </view>
+
+        <!-- 三个 Item 横排 -->
+        <view class="dash-row">
+          <!-- Item 1: Token 用量 -->
+          <view class="dash-item">
+            <view class="dash-item-header">
+              <text class="dash-icon">🔤</text>
+              <text class="dash-label">Token 用量</text>
+            </view>
+            <text class="dash-value primary">{{summary.totalTokens || '--'}}</text>
+            <view class="dash-sub-row">
+              <text class="dash-sub">入 {{summary.inputTokens || '--'}}</text>
+              <text class="dash-sub">出 {{summary.outputTokens || '--'}}</text>
+            </view>
+          </view>
+
+          <!-- 分割线 -->
+          <view class="dash-divider"></view>
+
+          <!-- Item 2: 请求次数 -->
+          <view class="dash-item">
+            <view class="dash-item-header">
+              <text class="dash-icon">📊</text>
+              <text class="dash-label">请求次数</text>
+            </view>
+            <text class="dash-value">{{summary.totalRequests || '--'}}</text>
+            <view class="dash-sub-row">
+              <text class="dash-sub">日均 {{summary.dailyRequests || '--'}}</text>
+            </view>
+          </view>
+
+          <!-- 分割线 -->
+          <view class="dash-divider"></view>
+
+          <!-- Item 3: 模型分布 -->
+          <view class="dash-item dash-item-models">
+            <view class="dash-item-header">
+              <text class="dash-icon">🤖</text>
+              <text class="dash-label">模型分布</text>
+            </view>
+            <view class="model-list" wx:if="{{models.length > 0}}">
+              <view class="model-mini-item" wx:for="{{models}}" wx:key="name" wx:if="{{index < 4}}">
+                <view class="model-dot" style="background: {{item.color}};"></view>
+                <text class="model-mini-name">{{item.name}}</text>
+                <text class="model-mini-count">{{item.requests}}次</text>
+              </view>
+              <view class="model-mini-item more" wx:if="{{models.length > 4}}">
+                <text class="model-mini-name more-text">+{{models.length - 4}} 更多</text>
+              </view>
+            </view>
+            <text class="dash-value" wx:else>--</text>
+          </view>
+        </view>
+
+        <!-- 费用速览（合并在卡片内） -->
+        <view class="cost-section" wx:if="{{summary}}">
+          <view class="cost-row">
+            <view class="cost-item">
+              <text class="cost-label">实际花费</text>
+              <text class="cost-value">{{summary.actualCost}}</text>
+            </view>
+            <view class="cost-item">
+              <text class="cost-label">节省金额</text>
+              <text class="cost-value success">{{summary.savedAmount}}</text>
+            </view>
+            <view class="cost-item">
+              <text class="cost-label">日均花费</text>
+              <text class="cost-value">{{summary.avgDaily}}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 底部提示 -->
+        <view class="dash-footer">
+          <text class="dash-footer-text" wx:if="{{lastUpdate}}">{{lastUpdate}} 更新</text>
+          <text class="dash-footer-text" wx:else>近7天数据</text>
+          <text class="dash-footer-arrow">查看详情 ›</text>
+        </view>
+      </view>
+
+      <!-- ===== 云服务监控仪表盘 ===== -->
+      <view class="cloud-card" bindtap="goCloudMonitor" wx:if="{{cloudConfigured}}">
+        <view class="cloud-header">
+          <text class="cloud-title">云服务监控</text>
+          <text class="cloud-status {{cloudData.status === 'RUNNING' ? 'running' : ''}}">{{cloudData.status === 'RUNNING' ? '运行中' : (cloudData.status || '--')}}</text>
+        </view>
+
+        <!-- 加载中 -->
+        <view class="cloud-loading" wx:if="{{cloudLoading}}">
+          <text class="loading-text">加载中...</text>
+        </view>
+
+        <block wx:else>
+          <!-- 四个 Item 横排 -->
+          <view class="cloud-row">
+            <!-- Item 1: 系统盘 -->
+            <view class="cloud-item">
+              <text class="cloud-label">系统盘</text>
+              <view class="cloud-ring-wrap">
+                <view class="cloud-ring" style="background: conic-gradient({{cloudData.diskPercent > 80 ? '#FF3B30' : '#34C759'}} {{cloudData.diskPercent * 3.6}}deg, #F0F0F0 0deg);">
+                  <view class="cloud-ring-inner">
+                    <text class="cloud-ring-pct">{{cloudData.diskPercent > 0 ? cloudData.diskPercent + '%' : '--'}}</text>
+                  </view>
+                </view>
+              </view>
+              <text class="cloud-val">{{cloudData.diskUsed || '--'}}</text>
+              <text class="cloud-sub">/{{cloudData.diskTotal || '--'}}</text>
+            </view>
+
+            <!-- 分割线 -->
+            <view class="cloud-divider"></view>
+
+            <!-- Item 2: CPU -->
+            <view class="cloud-item">
+              <text class="cloud-label">CPU | {{cloudData.cpuCores || '-'}}核</text>
+              <text class="cloud-big-val {{cloudData.cpuPercent > 80 ? 'danger' : ''}}">{{cloudData.cpuPercent || '--'}}<text class="cloud-unit">%</text></text>
+              <view class="cloud-bar">
+                <view class="cloud-bar-fill {{cloudData.cpuPercent > 80 ? 'danger' : ''}}" style="width: {{cloudData.cpuPercent || 0}}%"></view>
+              </view>
+            </view>
+
+            <!-- 分割线 -->
+            <view class="cloud-divider"></view>
+
+            <!-- Item 3: 内存 -->
+            <view class="cloud-item">
+              <text class="cloud-label">内存 | {{cloudData.memTotal || '-'}}</text>
+              <text class="cloud-big-val {{cloudData.memPercent > 80 ? 'danger' : ''}}">{{cloudData.memUsed || '--'}}<text class="cloud-unit"> MB</text></text>
+              <view class="cloud-bar">
+                <view class="cloud-bar-fill mem {{cloudData.memPercent > 80 ? 'danger' : ''}}" style="width: {{cloudData.memPercent || 0}}%"></view>
+              </view>
+            </view>
+
+            <!-- 分割线 -->
+            <view class="cloud-divider"></view>
+
+            <!-- Item 4: 流量包 -->
+            <view class="cloud-item">
+              <text class="cloud-label">流量包</text>
+              <view class="cloud-ring-wrap">
+                <view class="cloud-ring" style="background: conic-gradient({{cloudData.trafficPercent > 80 ? '#FF3B30' : '#007AFF'}} {{cloudData.trafficPercent * 3.6}}deg, #F0F0F0 0deg);">
+                  <view class="cloud-ring-inner">
+                    <text class="cloud-ring-pct">{{cloudData.trafficPercent || '0'}}%</text>
+                  </view>
+                </view>
+              </view>
+              <text class="cloud-val">{{cloudData.trafficUsed || '--'}}</text>
+              <text class="cloud-sub">/{{cloudData.trafficTotal || '--'}}</text>
+            </view>
+          </view>
+        </block>
+
+        <!-- 底部 -->
+        <view class="cloud-footer">
+          <text class="dash-footer-text" wx:if="{{cloudLastUpdate}}">{{cloudLastUpdate}} 更新</text>
+          <text class="dash-footer-text" wx:else>实时监控</text>
+          <text class="dash-footer-arrow">查看详情 ›</text>
+        </view>
+      </view>
+
+      <!-- 云服务未配置提示 -->
+      <view class="cloud-card cloud-empty" wx:if="{{!cloudConfigured}}" bindtap="goCloudMonitor">
+        <view class="cloud-header">
+          <text class="cloud-title">云服务监控</text>
+        </view>
+        <view class="cloud-empty-body">
+          <text class="cloud-empty-text">尚未配置，点击前往设置</text>
+        </view>
+      </view>
+
+
+      <!-- 无数据 -->
+      <view class="no-data" wx:if="{{!summary && !loading}}">
+        <text class="no-data-icon">📊</text>
+        <text class="no-data-text">暂无数据</text>
+        <text class="no-data-sub">请检查 API 配置是否正确</text>
+      </view>
+    </block>
+  </block>
+</view>
