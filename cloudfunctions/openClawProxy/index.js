@@ -55,18 +55,23 @@ exports.main = async (event) => {
   }
 
   try {
-    const apiBase = `${baseUrl}/api/v1`
+    // OpenClaw Gateway 实际路径:
+    // GET /health          -> {"status":"live"}
+    // GET /status          -> 系统状态
+    // GET /v1/sessions     -> 会话列表
+    // GET /v1/models       -> 模型列表
 
     // ========== 获取仪表盘概览（会话 + 消息量 + 模型分布） ==========
     if (action === 'getDashboard') {
-      // 并行请求: 会话列表 + 系统状态 + 健康检查
-      const [convsRes, statusRes, healthRes] = await Promise.all([
-        httpRequest(`${apiBase}/conversations`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
-        httpRequest(`${apiBase}/status`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
-        httpRequest(`${apiBase}/health`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message }))
+      // 并行请求: 会话列表 + 系统状态 + 模型列表 + 健康检查
+      const [sessionsRes, statusRes, modelsRes, healthRes] = await Promise.all([
+        httpRequest(`${baseUrl}/v1/sessions`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
+        httpRequest(`${baseUrl}/status`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
+        httpRequest(`${baseUrl}/v1/models`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
+        httpRequest(`${baseUrl}/health`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message }))
       ])
 
-      // ---- 解析会话数据 ----
+      // ---- 解析会话数据 (GET /v1/sessions) ----
       let totalSessions = 0
       let activeSessions = 0
       let totalMessages = 0
@@ -76,33 +81,33 @@ exports.main = async (event) => {
       let totalCost = 0
       const modelMap = {} // { modelName: { messages, tokens } }
 
-      if (convsRes.statusCode === 200 && convsRes.data) {
-        const convs = Array.isArray(convsRes.data) ? convsRes.data
-          : (convsRes.data.conversations || convsRes.data.data || [])
-        totalSessions = convs.length
+      if (sessionsRes.statusCode === 200 && sessionsRes.data) {
+        const sessions = Array.isArray(sessionsRes.data) ? sessionsRes.data
+          : (sessionsRes.data.sessions || sessionsRes.data.data || [])
+        totalSessions = sessions.length
 
-        for (const c of convs) {
+        for (const s of sessions) {
           // 活跃会话
-          if (c.active || c.status === 'active') activeSessions++
+          if (s.active || s.status === 'active') activeSessions++
 
           // 消息计数
-          const msgCount = c.messages || c.message_count || c.messageCount || c.turns || 0
+          const msgCount = s.messages || s.message_count || s.messageCount || s.turns || 0
           totalMessages += msgCount
 
           // Token 统计
-          const inTk = c.inputTokens || c.input_tokens || c.promptTokens || c.prompt_tokens || 0
-          const outTk = c.outputTokens || c.output_tokens || c.completionTokens || c.completion_tokens || 0
-          const tk = c.totalTokens || c.total_tokens || c.tokens || (inTk + outTk)
+          const inTk = s.inputTokens || s.input_tokens || s.promptTokens || s.prompt_tokens || 0
+          const outTk = s.outputTokens || s.output_tokens || s.completionTokens || s.completion_tokens || 0
+          const tk = s.totalTokens || s.total_tokens || s.tokens || (inTk + outTk)
           totalInputTokens += inTk
           totalOutputTokens += outTk
           totalTokens += tk
 
           // 费用
-          const cost = c.cost || c.totalCost || c.total_cost || 0
+          const cost = s.cost || s.totalCost || s.total_cost || 0
           totalCost += cost
 
           // 模型分布统计
-          const model = c.model || c.modelId || c.model_id || 'unknown'
+          const model = s.model || s.modelId || s.model_id || s.agentId || 'unknown'
           if (!modelMap[model]) modelMap[model] = { messages: 0, tokens: 0 }
           modelMap[model].messages += msgCount
           modelMap[model].tokens += tk
@@ -112,14 +117,12 @@ exports.main = async (event) => {
       // ---- 从 /status 补充系统级统计（如有） ----
       if (statusRes.statusCode === 200 && statusRes.data) {
         const st = statusRes.data
-        // 某些版本的 status 会包含汇总数据，优先使用
         if (st.totalMessages && st.totalMessages > totalMessages) totalMessages = st.totalMessages
         if (st.totalTokens && st.totalTokens > totalTokens) totalTokens = st.totalTokens
         if (st.totalSessions && st.totalSessions > totalSessions) totalSessions = st.totalSessions
         if (st.activeSessions && st.activeSessions > activeSessions) activeSessions = st.activeSessions
         if (st.totalCost && st.totalCost > totalCost) totalCost = st.totalCost
 
-        // 如果 status 带了模型分布
         const stModels = st.models || st.modelDistribution || st.model_distribution || null
         if (stModels && typeof stModels === 'object' && !Array.isArray(stModels)) {
           Object.entries(stModels).forEach(([name, data]) => {
@@ -129,6 +132,18 @@ exports.main = async (event) => {
               modelMap[name].tokens = Math.max(modelMap[name].tokens, data.tokens || 0)
             }
           })
+        }
+      }
+
+      // ---- 从 /v1/models 补充可用模型列表 ----
+      if (modelsRes.statusCode === 200 && modelsRes.data) {
+        const modelsList = Array.isArray(modelsRes.data) ? modelsRes.data
+          : (modelsRes.data.models || modelsRes.data.data || [])
+        for (const m of modelsList) {
+          const name = m.id || m.name || m.model || ''
+          if (name && !modelMap[name]) {
+            modelMap[name] = { messages: 0, tokens: 0 }
+          }
         }
       }
 
@@ -157,7 +172,7 @@ exports.main = async (event) => {
 
     // ========== 测试连接 ==========
     if (action === 'testConnection') {
-      const res = await httpRequest(`${apiBase}/health`, { headers })
+      const res = await httpRequest(`${baseUrl}/health`, { headers })
       return {
         success: res.statusCode === 200,
         statusCode: res.statusCode,
@@ -167,7 +182,7 @@ exports.main = async (event) => {
 
     // ========== 获取系统状态 ==========
     if (action === 'getStatus') {
-      const res = await httpRequest(`${apiBase}/status`, { headers })
+      const res = await httpRequest(`${baseUrl}/status`, { headers })
       if (res.statusCode === 200) {
         return { success: true, data: res.data }
       }
