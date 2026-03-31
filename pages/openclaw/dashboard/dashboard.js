@@ -121,6 +121,8 @@ Page({
   async fetchModels(config) {
     try {
       const res = await this.callCloud('getModels', config)
+      console.log('[OC Models] 返回结果:', JSON.stringify(res).substring(0, 500))
+
       if (res.success && res.data) {
         const colors = ['#007AFF', '#FF9500', '#AF52DE', '#FF3B30', '#34C759', '#5AC8FA', '#FF2D55', '#FFCC00']
         let modelsList = []

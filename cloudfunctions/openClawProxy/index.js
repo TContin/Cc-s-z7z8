@@ -80,10 +80,13 @@ exports.main = async (event) => {
   // 去掉末尾斜杠
   const baseUrl = serverUrl.replace(/\/+$/, '')
 
-  // OpenClaw Gateway 认证：Bearer token
+  // OpenClaw Gateway 认证：支持多种方式
   const headers = {}
   if (apiToken) {
     headers['Authorization'] = `Bearer ${apiToken}`
+    // OpenClaw Gateway 还可能通过以下 header 接受 token
+    headers['X-API-Key'] = apiToken
+    headers['x-openclaw-token'] = apiToken
   }
 
   try {
@@ -109,10 +112,17 @@ exports.main = async (event) => {
         httpRequest(`${baseUrl}/v1/models`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message }))
       ])
 
+      // 如果 /v1/models 返回 HTML，尝试 query 参数方式
+      let finalModelsRes = modelsRes
+      if (!isValidJsonData(modelsRes) && apiToken) {
+        finalModelsRes = await httpRequest(`${baseUrl}/v1/models?token=${apiToken}`, { headers }).catch(e => modelsRes)
+      }
+
       // 调试信息
       const debug = {
         health: { status: healthRes.statusCode, contentType: healthRes.contentType, isJson: isValidJsonData(healthRes) },
-        models: { status: modelsRes.statusCode, contentType: modelsRes.contentType, isJson: isValidJsonData(modelsRes) }
+        models: { status: finalModelsRes.statusCode, contentType: finalModelsRes.contentType, isJson: isValidJsonData(finalModelsRes) },
+        modelsRetried: finalModelsRes !== modelsRes
       }
 
       // ---- 解析健康状态 ----
@@ -123,8 +133,8 @@ exports.main = async (event) => {
       // OpenAI 兼容格式: { object: "list", data: [{ id, object, created, owned_by }] }
       const modelMap = {}
 
-      if (isValidJsonData(modelsRes)) {
-        const modelsList = parseModelsList(modelsRes.data)
+      if (isValidJsonData(finalModelsRes)) {
+        const modelsList = parseModelsList(finalModelsRes.data)
 
         for (const m of modelsList) {
           const name = m.id || m.name || m.model || ''
@@ -145,9 +155,9 @@ exports.main = async (event) => {
         }
       } else {
         // /v1/models 返回了 HTML 而非 JSON，可能认证问题
-        debug.modelsError = modelsRes.data && modelsRes.data._raw
-          ? '返回了HTML而非JSON: ' + modelsRes.data._raw.substring(0, 100)
-          : '请求失败 HTTP ' + modelsRes.statusCode
+        debug.modelsError = finalModelsRes.data && finalModelsRes.data._raw
+          ? '返回了HTML而非JSON: ' + finalModelsRes.data._raw.substring(0, 100)
+          : '请求失败 HTTP ' + finalModelsRes.statusCode
       }
 
       // 转换 modelMap 为数组
@@ -187,15 +197,28 @@ exports.main = async (event) => {
 
     // ========== 获取模型列表 ==========
     if (action === 'getModels') {
-      const res = await httpRequest(`${baseUrl}/v1/models`, { headers })
+      // 先尝试正常请求
+      let res = await httpRequest(`${baseUrl}/v1/models`, { headers })
+
+      // 如果返回了 HTML，尝试通过 query 参数传递 token
+      if (!isValidJsonData(res) && apiToken) {
+        res = await httpRequest(`${baseUrl}/v1/models?token=${apiToken}`, { headers })
+      }
+
       if (isValidJsonData(res)) {
         return { success: true, data: res.data }
       }
+
+      // 返回详细错误信息用于调试
       return {
         success: false,
         error: `模型列表获取失败 (HTTP ${res.statusCode})`,
         contentType: res.contentType,
-        hint: res.data && res.data._isHtml ? '返回了HTML页面而非JSON，请检查Token认证' : ''
+        isHtml: !!(res.data && res.data._isHtml),
+        rawPreview: res.data && res.data._raw ? res.data._raw.substring(0, 150) : '',
+        hint: res.data && res.data._isHtml
+          ? '返回了HTML页面而非JSON。可能原因：1) Token格式不正确 2) Gateway未配置模型 3) 需要密码而非Token认证'
+          : ''
       }
     }
 
