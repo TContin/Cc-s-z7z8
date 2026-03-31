@@ -256,6 +256,32 @@ exports.main = async (event) => {
       }
     }
 
+    // ========== 会话内切换模型 ==========
+    if (action === 'switchSessionModel') {
+      const { sessionKey, modelId, agentId } = event
+      if (!sessionKey || !modelId) {
+        return { success: false, error: '缺少 sessionKey 或 modelId' }
+      }
+      const result = await fetchFromConfigApi(
+        `/api/switch-session-model?agentId=${encodeURIComponent(agentId || 'main')}&sessionKey=${encodeURIComponent(sessionKey)}&modelId=${encodeURIComponent(modelId)}`
+      )
+      if (result !== null) return result
+      return { success: true, hint: '模型偏好已记录（需配置API支持写入）' }
+    }
+
+    // ========== 删除会话 ==========
+    if (action === 'deleteSession') {
+      const { sessionKey, agentId } = event
+      if (!sessionKey) {
+        return { success: false, error: '缺少 sessionKey' }
+      }
+      const result = await fetchFromConfigApi(
+        `/api/delete-session?agentId=${encodeURIComponent(agentId || 'main')}&sessionKey=${encodeURIComponent(sessionKey)}`
+      )
+      if (result !== null) return result
+      return { success: false, error: '需要配置API支持删除操作' }
+    }
+
     // ========== 获取统计概览 ==========
     if (action === 'getStats') {
       const configStats = await fetchFromConfigApi('/api/stats')

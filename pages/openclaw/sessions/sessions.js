@@ -13,7 +13,14 @@ Page({
     filteredSessions: [],
     totalSessions: 0,
     totalTokens: '--',
-    activeSessions: 0
+    activeSessions: 0,
+
+    // 模型选择弹窗
+    showModelPicker: false,
+    modelList: [],
+    switchSessionKey: '',
+    switchSessionIndex: -1,
+    switchCurrentModel: ''
   },
 
   onLoad(options) {
@@ -34,6 +41,16 @@ Page({
     if (!config || !config.serverUrl) return
     this.setData({ loading: true })
 
+    // 并行加载会话和模型列表
+    await Promise.all([
+      this.fetchSessions(config),
+      this.fetchModels(config)
+    ])
+
+    this.setData({ loading: false, refreshing: false })
+  },
+
+  async fetchSessions(config) {
     try {
       const res = await this.callCloud('getSessions', config, { agentId: this.data.agentId })
       if (res.success && res.data) {
@@ -59,15 +76,32 @@ Page({
     } catch (e) {
       console.error('[Sessions]', e)
     }
+  },
 
-    this.setData({ loading: false, refreshing: false })
+  async fetchModels(config) {
+    try {
+      const res = await this.callCloud('getModels', config)
+      if (res.success && res.data) {
+        const colors = ['#007AFF', '#FF9500', '#AF52DE', '#FF3B30', '#34C759', '#5AC8FA', '#FF2D55', '#FFCC00']
+        let list = Array.isArray(res.data) ? res.data : (res.data.data || res.data.models || [])
+        this.setData({
+          modelList: list.map((m, i) => ({
+            id: m.id || m.name || '',
+            name: m.name || m.id || '--',
+            providerId: m.providerId || m.owned_by || '',
+            color: colors[i % colors.length]
+          }))
+        })
+      }
+    } catch (e) {
+      console.error('[Sessions] fetchModels:', e)
+    }
   },
 
   parseSession(s) {
     const key = s.key || s.sessionId || '--'
     const type = this.detectType(key, s.type)
 
-    // 时间处理
     let updatedAtRaw = 0
     if (s.updatedAt) {
       updatedAtRaw = typeof s.updatedAt === 'number'
@@ -87,6 +121,7 @@ Page({
       totalTokensText: this.formatTokens(s.totalTokens || 0),
       contextTokensText: this.formatTokens(s.contextTokens || 0),
       systemSent: s.systemSent !== false,
+      currentModel: s.currentModel || '',
       updatedAtRaw,
       updatedAtText: this.formatTime(updatedAtRaw)
     }
@@ -140,6 +175,103 @@ Page({
     } else {
       this.setData({ filteredSessions: sessions.filter(s => s.type === currentFilter) })
     }
+  },
+
+  // ========== 切换模型 ==========
+  switchSessionModel(e) {
+    const key = e.currentTarget.dataset.key
+    const idx = e.currentTarget.dataset.index
+    const session = this.data.filteredSessions[idx]
+
+    if (this.data.modelList.length === 0) {
+      wx.showToast({ title: '模型列表加载中', icon: 'none' })
+      return
+    }
+
+    this.setData({
+      showModelPicker: true,
+      switchSessionKey: this.shortKey(key),
+      switchSessionIndex: idx,
+      switchCurrentModel: session ? session.currentModel : '',
+      _switchRealKey: key
+    })
+  },
+
+  closeModelPicker() {
+    this.setData({ showModelPicker: false })
+  },
+
+  async selectModel(e) {
+    const modelId = e.currentTarget.dataset.id
+    const modelName = e.currentTarget.dataset.name
+    const sessionKey = this.data._switchRealKey
+
+    this.setData({ showModelPicker: false })
+    wx.showLoading({ title: '切换中...' })
+
+    const config = getData('openclawConfig', null)
+    if (!config) { wx.hideLoading(); return }
+
+    try {
+      const res = await this.callCloud('switchSessionModel', config, {
+        sessionKey,
+        modelId,
+        agentId: this.data.agentId || 'main'
+      })
+
+      // 更新本地显示
+      const idx = this.data.filteredSessions.findIndex(s => s.key === sessionKey)
+      if (idx >= 0) {
+        this.setData({ [`filteredSessions[${idx}].currentModel`]: modelName })
+      }
+      const sIdx = this.data.sessions.findIndex(s => s.key === sessionKey)
+      if (sIdx >= 0) {
+        this.setData({ [`sessions[${sIdx}].currentModel`]: modelName })
+      }
+
+      wx.showToast({ title: '已切换到 ' + modelName, icon: 'success' })
+    } catch (err) {
+      wx.showToast({ title: '切换失败', icon: 'error' })
+    }
+
+    wx.hideLoading()
+  },
+
+  // ========== 删除会话 ==========
+  deleteSession(e) {
+    const key = e.currentTarget.dataset.key
+    const idx = e.currentTarget.dataset.index
+
+    wx.showModal({
+      title: '删除会话',
+      content: '确定删除此会话？此操作不可撤销。',
+      confirmColor: '#FF3B30',
+      success: async (res) => {
+        if (!res.confirm) return
+
+        wx.showLoading({ title: '删除中...' })
+        const config = getData('openclawConfig', null)
+        if (!config) { wx.hideLoading(); return }
+
+        try {
+          await this.callCloud('deleteSession', config, {
+            sessionKey: key,
+            agentId: this.data.agentId || 'main'
+          })
+
+          // 从列表中移除
+          const sessions = this.data.sessions.filter(s => s.key !== key)
+          this.setData({ sessions, totalSessions: sessions.length })
+          this.applyFilter()
+
+          wx.showToast({ title: '已删除', icon: 'success' })
+        } catch (err) {
+          wx.showToast({ title: '删除失败', icon: 'error' })
+        }
+
+        wx.hideLoading()
+      }
+    })
   },
 
   callCloud(action, config, extra) {

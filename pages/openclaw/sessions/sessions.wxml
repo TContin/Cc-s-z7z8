@@ -46,7 +46,7 @@
 
     <!-- 会话列表 -->
     <view class="session-list" wx:if="{{filteredSessions.length > 0}}">
-      <view class="session-card" wx:for="{{filteredSessions}}" wx:key="key">
+      <view class="session-card" wx:for="{{filteredSessions}}" wx:key="key" wx:for-index="idx">
         <view class="session-top">
           <view class="session-type-badge {{item.typeClass}}">
             <text class="session-type-icon">{{item.typeIcon}}</text>
@@ -58,6 +58,12 @@
         <view class="session-main">
           <text class="session-key">{{item.displayKey}}</text>
           <text class="session-target" wx:if="{{item.target}}">→ {{item.target}}</text>
+        </view>
+
+        <!-- 当前模型 -->
+        <view class="session-model-row" wx:if="{{item.currentModel}}">
+          <text class="session-model-label">模型:</text>
+          <text class="session-model-name">{{item.currentModel}}</text>
         </view>
 
         <view class="session-stats-row">
@@ -74,6 +80,18 @@
             <text class="session-stat-label">System</text>
           </view>
         </view>
+
+        <!-- 操作按钮 -->
+        <view class="session-actions">
+          <view class="session-action-btn" bindtap="switchSessionModel" data-key="{{item.key}}" data-index="{{idx}}">
+            <text class="session-action-icon">🔄</text>
+            <text class="session-action-text">切换模型</text>
+          </view>
+          <view class="session-action-btn danger" bindtap="deleteSession" data-key="{{item.key}}" data-index="{{idx}}">
+            <text class="session-action-icon">🗑️</text>
+            <text class="session-action-text danger">删除</text>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -86,4 +104,31 @@
 
     <view style="height: 60rpx;"></view>
   </scroll-view>
+
+  <!-- 模型选择弹窗 -->
+  <view class="modal-mask" wx:if="{{showModelPicker}}" bindtap="closeModelPicker">
+    <view class="modal-content model-picker" catchtap="">
+      <text class="modal-title">选择模型</text>
+      <text class="modal-desc">为会话 {{switchSessionKey}} 切换模型</text>
+
+      <scroll-view scroll-y class="model-picker-list">
+        <view class="model-picker-item {{item.id === switchCurrentModel ? 'active' : ''}}"
+              wx:for="{{modelList}}" wx:key="id"
+              bindtap="selectModel" data-id="{{item.id}}" data-name="{{item.name}}">
+          <view class="model-picker-dot" style="background: {{item.color}};"></view>
+          <view class="model-picker-info">
+            <text class="model-picker-name">{{item.name}}</text>
+            <text class="model-picker-provider">{{item.providerId}}</text>
+          </view>
+          <text class="model-picker-check" wx:if="{{item.id === switchCurrentModel}}">✓</text>
+        </view>
+      </scroll-view>
+
+      <view class="modal-btns">
+        <view class="modal-btn cancel" bindtap="closeModelPicker">
+          <text class="modal-btn-text">取消</text>
+        </view>
+      </view>
+    </view>
+  </view>
 </view>

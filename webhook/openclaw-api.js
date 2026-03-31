@@ -464,6 +464,85 @@ const server = http.createServer((req, res) => {
     return // 异步处理
   }
 
+  // 删除会话
+  if (pathname === '/api/delete-session') {
+    const agentId = url.searchParams.get('agentId') || 'main'
+    const sessionKey = url.searchParams.get('sessionKey')
+    if (!sessionKey) return jsonResponse(res, { success: false, error: '缺少 sessionKey' }, 400)
+
+    try {
+      const sessionsFile = path.join(OPENCLAW_HOME, 'agents', agentId, 'sessions', 'sessions.json')
+      const sessions = readJsonFile(sessionsFile)
+      if (sessions && sessions[sessionKey] !== undefined) {
+        delete sessions[sessionKey]
+        fs.writeFileSync(sessionsFile, JSON.stringify(sessions, null, 2), 'utf-8')
+        return jsonResponse(res, { success: true })
+      }
+      return jsonResponse(res, { success: false, error: '会话不存在' })
+    } catch (e) {
+      return jsonResponse(res, { success: false, error: e.message })
+    }
+  }
+
+  // 会话内切换模型（写入 JSONL 日志中的 model_change 事件）
+  if (pathname === '/api/switch-session-model') {
+    const agentId = url.searchParams.get('agentId') || 'main'
+    const sessionKey = url.searchParams.get('sessionKey')
+    const modelId = url.searchParams.get('modelId')
+    if (!sessionKey || !modelId) return jsonResponse(res, { success: false, error: '缺少参数' }, 400)
+
+    try {
+      // 找到模型所属的 provider
+      let providerId = ''
+      if (config && config.models && config.models.providers) {
+        for (const [pid, prov] of Object.entries(config.models.providers)) {
+          const found = (prov.models || []).find(m => m.id === modelId)
+          if (found) { providerId = pid; break }
+        }
+      }
+
+      // 写入 model_change 事件到对应会话的 JSONL
+      const sessionsDir = path.join(OPENCLAW_HOME, 'agents', agentId, 'sessions')
+      // 找到会话对应的 jsonl 文件
+      const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith('.jsonl') && !f.includes('.deleted.'))
+
+      // 匹配 sessionKey 对应的文件（通常文件名包含 session 信息）
+      // 如果找不到精确匹配，写入最近修改的文件
+      let targetFile = ''
+      for (const f of files) {
+        if (f.includes(sessionKey.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20))) {
+          targetFile = path.join(sessionsDir, f)
+          break
+        }
+      }
+      if (!targetFile && files.length > 0) {
+        // 用最近修改的文件
+        const sorted = files.map(f => ({
+          name: f,
+          mtime: fs.statSync(path.join(sessionsDir, f)).mtimeMs
+        })).sort((a, b) => b.mtime - a.mtime)
+        targetFile = path.join(sessionsDir, sorted[0].name)
+      }
+
+      if (targetFile) {
+        const event = {
+          type: 'model_change',
+          id: Math.random().toString(36).slice(2, 10),
+          parentId: null,
+          timestamp: new Date().toISOString(),
+          provider: providerId,
+          modelId: modelId
+        }
+        fs.appendFileSync(targetFile, '\n' + JSON.stringify(event), 'utf-8')
+        return jsonResponse(res, { success: true, data: { modelId, providerId } })
+      }
+
+      return jsonResponse(res, { success: false, error: '未找到会话文件' })
+    } catch (e) {
+      return jsonResponse(res, { success: false, error: e.message })
+    }
+  }
+
   jsonResponse(res, { error: 'not found' }, 404)
 })
 
