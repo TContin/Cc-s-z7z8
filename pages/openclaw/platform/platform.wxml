@@ -1,0 +1,126 @@
+<view class="page-oc-platform">
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar-inner">
+      <view class="nav-back" bindtap="goBack">
+        <text class="nav-back-icon">‹</text>
+      </view>
+      <text class="nav-title">📡 平台监控</text>
+      <view class="nav-actions">
+        <text class="nav-refresh {{refreshing ? 'spinning' : ''}}" bindtap="refreshAll">⟳</text>
+      </view>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="content-scroll" style="top: {{navBarHeight}}px;" refresher-enabled bindrefresherrefresh="onPullRefresh" refresher-triggered="{{refreshing}}">
+
+    <!-- Gateway 健康状态 -->
+    <view class="section-card gw-health-card">
+      <view class="gw-health-header">
+        <view class="gw-health-status {{gatewayHealthy ? 'online' : 'offline'}}">
+          <view class="gw-pulse-dot"></view>
+        </view>
+        <view class="gw-health-info">
+          <text class="gw-health-title">Gateway {{gatewayHealthy ? '在线' : '离线'}}</text>
+          <text class="gw-health-url">{{serverUrl || '--'}}</text>
+        </view>
+        <view class="gw-health-ms" wx:if="{{responseMs !== '--'}}">
+          <text class="gw-health-ms-val">{{responseMs}}</text>
+          <text class="gw-health-ms-unit">ms</text>
+        </view>
+      </view>
+      <view class="gw-actions">
+        <view class="gw-action-btn" bindtap="testConnection">
+          <text class="gw-action-text">🔍 测试连接</text>
+        </view>
+        <view class="gw-action-btn" bindtap="openWebUI">
+          <text class="gw-action-text">🌐 Web UI</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Agent 列表 -->
+    <view class="section-card">
+      <view class="section-header">
+        <text class="section-title">Bots / Agents</text>
+        <text class="section-count">{{agents.length}} 个</text>
+      </view>
+
+      <view class="agent-list" wx:if="{{agents.length > 0}}">
+        <view class="agent-card" wx:for="{{agents}}" wx:key="id">
+          <view class="agent-card-top">
+            <view class="agent-avatar">
+              <text class="agent-emoji">{{item.emoji || '🤖'}}</text>
+            </view>
+            <view class="agent-main">
+              <view class="agent-name-row">
+                <text class="agent-name">{{item.name}}</text>
+                <view class="agent-state-badge {{item.state}}">
+                  <text class="agent-state-text">{{item.stateText}}</text>
+                </view>
+              </view>
+              <text class="agent-model">模型: {{item.model || '--'}}</text>
+            </view>
+          </view>
+
+          <!-- Agent 绑定的平台 -->
+          <view class="agent-platforms" wx:if="{{item.platforms.length > 0}}">
+            <view class="platform-tag {{p.connected ? 'connected' : 'disconnected'}}" wx:for="{{item.platforms}}" wx:for-item="p" wx:key="name">
+              <text class="platform-icon">{{p.icon}}</text>
+              <text class="platform-name">{{p.name}}</text>
+              <view class="platform-dot {{p.connected ? 'on' : 'off'}}"></view>
+            </view>
+          </view>
+
+          <!-- Agent 统计 -->
+          <view class="agent-stats-row">
+            <view class="agent-stat">
+              <text class="agent-stat-val">{{item.sessionCount || 0}}</text>
+              <text class="agent-stat-label">会话</text>
+            </view>
+            <view class="agent-stat">
+              <text class="agent-stat-val">{{item.totalTokens || '--'}}</text>
+              <text class="agent-stat-label">Token</text>
+            </view>
+            <view class="agent-stat">
+              <text class="agent-stat-val">{{item.lastActive || '--'}}</text>
+              <text class="agent-stat-label">最近活跃</text>
+            </view>
+          </view>
+
+          <view class="agent-action-row">
+            <view class="agent-action-btn" bindtap="viewSessions" data-id="{{item.id}}">
+              <text class="agent-action-text">查看会话</text>
+            </view>
+            <view class="agent-action-btn primary" bindtap="testPlatform" data-id="{{item.id}}">
+              <text class="agent-action-text primary">连通测试</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:else>
+        <text class="empty-icon">📡</text>
+        <text class="empty-text">{{loading ? '加载中...' : '未发现 Agent'}}</text>
+        <text class="empty-sub">请确保 OpenClaw 已正确配置</text>
+      </view>
+    </view>
+
+    <!-- 连通性测试结果 -->
+    <view class="section-card" wx:if="{{testResults.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">连通性测试结果</text>
+      </view>
+      <view class="test-results">
+        <view class="test-result-item" wx:for="{{testResults}}" wx:key="name">
+          <text class="test-result-icon">{{item.ok ? '✅' : '❌'}}</text>
+          <text class="test-result-name">{{item.name}}</text>
+          <text class="test-result-ms" wx:if="{{item.ms}}">{{item.ms}}ms</text>
+        </view>
+      </view>
+    </view>
+
+    <view style="height: 60rpx;"></view>
+  </scroll-view>
+</view>

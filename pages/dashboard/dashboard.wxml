@@ -188,7 +188,7 @@
       </view>
 
       <!-- ===== OpenClaw 监控仪表盘 ===== -->
-      <view class="openclaw-card" wx:if="{{openclawConfigured}}" bindtap="goOpenClawConfig">
+      <view class="openclaw-card" wx:if="{{openclawConfigured}}" bindtap="goOpenClawDashboard">
         <view class="card-header">
           <view class="openclaw-title-wrap">
             <text class="card-title">🦞 OpenClaw</text>
@@ -269,7 +269,7 @@
         <view class="openclaw-footer">
           <text class="dash-footer-text" wx:if="{{openclawLastUpdate}}">{{openclawLastUpdate}} 更新</text>
           <text class="dash-footer-text" wx:else>实时监控</text>
-          <text class="dash-footer-arrow">配置 ›</text>
+          <text class="dash-footer-arrow">查看详情 ›</text>
         </view>
       </view>
 

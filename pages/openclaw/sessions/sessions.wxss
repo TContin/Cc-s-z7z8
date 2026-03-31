@@ -1,0 +1,78 @@
+.page-oc-sessions { background: var(--bg-page, #F2F2F7); min-height: 100vh; }
+.nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--bg-page, #F2F2F7); }
+.nav-bar-inner { display: flex; align-items: center; height: 88rpx; padding: 0 24rpx; }
+.nav-back { width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center; }
+.nav-back-icon { font-size: 44rpx; color: var(--text-primary); font-weight: 300; }
+.nav-title { flex: 1; text-align: center; font-size: 32rpx; font-weight: 600; color: var(--text-primary); }
+.nav-actions { width: 64rpx; display: flex; align-items: center; justify-content: center; }
+.nav-refresh { font-size: 40rpx; color: var(--text-primary); }
+.nav-refresh.spinning { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.content-scroll { position: fixed; left: 0; right: 0; bottom: 0; padding: 16rpx 24rpx; box-sizing: border-box; }
+
+/* 筛选栏 */
+.filter-bar {
+  display: flex; gap: 12rpx; margin-bottom: 16rpx;
+  padding: 8rpx 0; overflow-x: auto; white-space: nowrap;
+}
+.filter-item {
+  display: inline-flex; align-items: center; gap: 6rpx;
+  padding: 12rpx 24rpx; border-radius: 20rpx;
+  background: var(--bg-card, #fff); flex-shrink: 0;
+}
+.filter-item.active { background: #FF6B35; }
+.filter-item.active .filter-text { color: #fff; }
+.filter-item.active .filter-count { color: rgba(255,255,255,0.8); }
+.filter-text { font-size: 26rpx; font-weight: 500; color: var(--text-primary); }
+.filter-count { font-size: 22rpx; color: var(--text-hint); }
+
+/* 统计行 */
+.stats-row {
+  display: flex; background: var(--bg-card, #fff);
+  border-radius: 20rpx; padding: 20rpx 0; margin-bottom: 16rpx;
+}
+.stats-item { flex: 1; text-align: center; }
+.stats-val { display: block; font-size: 36rpx; font-weight: 700; color: var(--text-primary); }
+.stats-label { display: block; font-size: 20rpx; color: var(--text-hint); margin-top: 4rpx; }
+
+/* 会话卡片 */
+.session-card {
+  background: var(--bg-card, #fff); border-radius: 20rpx;
+  padding: 20rpx; margin-bottom: 12rpx;
+}
+.session-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12rpx; }
+.session-type-badge {
+  display: flex; align-items: center; gap: 6rpx;
+  padding: 4rpx 14rpx; border-radius: 10rpx;
+}
+.session-type-badge.dm { background: rgba(0,122,255,0.1); }
+.session-type-badge.dm .session-type-text { color: #007AFF; }
+.session-type-badge.group { background: rgba(88,86,214,0.1); }
+.session-type-badge.group .session-type-text { color: #5856D6; }
+.session-type-badge.cron { background: rgba(255,149,0,0.1); }
+.session-type-badge.cron .session-type-text { color: #FF9500; }
+.session-type-badge.main { background: rgba(255,107,53,0.1); }
+.session-type-badge.main .session-type-text { color: #FF6B35; }
+.session-type-badge.other { background: rgba(142,142,147,0.1); }
+.session-type-badge.other .session-type-text { color: #8E8E93; }
+.session-type-icon { font-size: 22rpx; }
+.session-type-text { font-size: 22rpx; font-weight: 500; }
+.session-time { font-size: 22rpx; color: var(--text-hint); }
+
+.session-main { margin-bottom: 12rpx; }
+.session-key {
+  font-size: 26rpx; font-weight: 600; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
+}
+.session-target { font-size: 22rpx; color: var(--text-hint); margin-top: 4rpx; display: block; }
+
+.session-stats-row { display: flex; }
+.session-stat { flex: 1; text-align: center; }
+.session-stat-val { display: block; font-size: 26rpx; font-weight: 600; color: var(--text-primary); }
+.session-stat-label { display: block; font-size: 18rpx; color: var(--text-hint); }
+
+/* 空状态 */
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 80rpx 0; }
+.empty-icon { font-size: 64rpx; margin-bottom: 12rpx; }
+.empty-text { font-size: 28rpx; color: var(--text-primary); font-weight: 500; }
+.empty-sub { font-size: 24rpx; color: var(--text-hint); margin-top: 8rpx; }

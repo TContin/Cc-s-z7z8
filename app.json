@@ -18,7 +18,11 @@
     "pages/cloudmonitor/config/config",
     "pages/notes/notes",
     "pages/notes/edit/edit",
-    "pages/openclaw/config/config"
+    "pages/openclaw/config/config",
+    "pages/openclaw/dashboard/dashboard",
+    "pages/openclaw/models/models",
+    "pages/openclaw/sessions/sessions",
+    "pages/openclaw/platform/platform"
   ],
   "window": {
     "navigationBarBackgroundColor": "#F2F2F7",

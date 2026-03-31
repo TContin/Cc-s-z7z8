@@ -62,6 +62,14 @@ function isValidJsonData(res) {
   return true
 }
 
+// 解析模型列表（兼容多种数据结构）
+function parseModelsList(data) {
+  if (Array.isArray(data)) return data
+  if (data && Array.isArray(data.data)) return data.data
+  if (data && Array.isArray(data.models)) return data.models
+  return []
+}
+
 exports.main = async (event) => {
   const { action, serverUrl, apiToken } = event
 
@@ -116,16 +124,7 @@ exports.main = async (event) => {
       const modelMap = {}
 
       if (isValidJsonData(modelsRes)) {
-        const modelsData = modelsRes.data
-        // 尝试多种可能的数据结构
-        let modelsList = []
-        if (Array.isArray(modelsData)) {
-          modelsList = modelsData
-        } else if (modelsData && Array.isArray(modelsData.data)) {
-          modelsList = modelsData.data
-        } else if (modelsData && Array.isArray(modelsData.models)) {
-          modelsList = modelsData.models
-        }
+        const modelsList = parseModelsList(modelsRes.data)
 
         for (const m of modelsList) {
           const name = m.id || m.name || m.model || ''
@@ -197,6 +196,128 @@ exports.main = async (event) => {
         error: `模型列表获取失败 (HTTP ${res.statusCode})`,
         contentType: res.contentType,
         hint: res.data && res.data._isHtml ? '返回了HTML页面而非JSON，请检查Token认证' : ''
+      }
+    }
+
+    // ========== 获取 Agent 列表 ==========
+    // OpenClaw 配置中的 agents 通过 /v1/models 推断
+    // 因为 REST 不直接暴露 agents，所以用模型列表构造虚拟 agent
+    if (action === 'getAgents') {
+      const [healthRes, modelsRes] = await Promise.all([
+        httpRequest(`${baseUrl}/health`, { headers }).catch(e => ({ statusCode: 0, data: null })),
+        httpRequest(`${baseUrl}/v1/models`, { headers }).catch(e => ({ statusCode: 0, data: null }))
+      ])
+
+      const healthy = healthRes.statusCode === 200
+
+      // 从模型列表中提取 agent 风格的条目
+      // OpenClaw 在 /v1/models 中会返回 openclaw, openclaw/default, openclaw/<agentId>
+      const agents = []
+      if (isValidJsonData(modelsRes)) {
+        const list = parseModelsList(modelsRes.data)
+        const agentModels = list.filter(m => {
+          const id = m.id || ''
+          return id.startsWith('openclaw/') && id !== 'openclaw/default'
+        })
+
+        // 如果有 openclaw/ 前缀的，每个是一个 agent
+        if (agentModels.length > 0) {
+          agentModels.forEach(m => {
+            const agentId = (m.id || '').replace('openclaw/', '')
+            agents.push({
+              id: agentId,
+              name: agentId,
+              emoji: '🤖',
+              model: m.owned_by || '--',
+              state: healthy ? 'online' : 'offline',
+              sessionCount: 0,
+              platforms: []
+            })
+          })
+        } else {
+          // 没有明确的 agent，构造一个默认 "main" agent
+          agents.push({
+            id: 'main',
+            name: 'Main Bot',
+            emoji: '🦞',
+            model: list.length > 0 ? (list[0].id || '--') : '--',
+            state: healthy ? 'online' : 'offline',
+            sessionCount: 0,
+            platforms: []
+          })
+        }
+      }
+
+      return { success: true, data: agents }
+    }
+
+    // ========== 获取会话列表 ==========
+    // REST API 不直接暴露会话，返回提示信息
+    if (action === 'getSessions') {
+      // 尝试通过 /api/sessions 探测（部分版本可能支持）
+      const res = await httpRequest(`${baseUrl}/api/sessions`, { headers }).catch(e => ({ statusCode: 0, data: null }))
+
+      if (isValidJsonData(res)) {
+        const sessions = Array.isArray(res.data) ? res.data : (res.data.sessions || res.data.data || [])
+        return { success: true, data: sessions }
+      }
+
+      // REST 不支持，返回空列表并提示
+      return {
+        success: true,
+        data: [],
+        hint: '会话数据需要通过 OpenClaw Dashboard Web UI 查看（Gateway 使用 WebSocket 传输会话数据）'
+      }
+    }
+
+    // ========== 获取统计概览 ==========
+    if (action === 'getStats') {
+      // 尝试多个可能的统计端点
+      const res = await httpRequest(`${baseUrl}/api/stats`, { headers }).catch(e => ({ statusCode: 0, data: null }))
+
+      if (isValidJsonData(res)) {
+        return { success: true, data: res.data }
+      }
+
+      // REST 不直接支持统计，返回空数据
+      return {
+        success: true,
+        data: { totalTokens: 0, totalMessages: 0, totalSessions: 0, avgResponseMs: 0 }
+      }
+    }
+
+    // ========== 模型探测/测试 ==========
+    if (action === 'probeModel') {
+      const modelId = event.modelId
+      if (!modelId) {
+        return { success: false, error: '未指定模型 ID' }
+      }
+
+      try {
+        // 向模型发送极简请求验证可用性
+        const res = await httpRequest(`${baseUrl}/v1/chat/completions`, {
+          method: 'POST',
+          headers,
+          body: {
+            model: modelId,
+            messages: [{ role: 'user', content: 'Reply with OK.' }],
+            max_tokens: 8,
+            stream: false
+          }
+        })
+
+        if (res.statusCode === 200 && isValidJsonData(res)) {
+          return { success: true, data: res.data }
+        }
+
+        // 检查具体错误
+        const errMsg = res.data && typeof res.data === 'object'
+          ? (res.data.error && res.data.error.message) || JSON.stringify(res.data).substring(0, 100)
+          : `HTTP ${res.statusCode}`
+
+        return { success: false, error: errMsg, statusCode: res.statusCode }
+      } catch (err) {
+        return { success: false, error: err.message || '探测异常' }
       }
     }
 

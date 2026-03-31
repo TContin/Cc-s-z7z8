@@ -511,6 +511,10 @@ Page({
     }
   },
 
+  goOpenClawDashboard() {
+    wx.navigateTo({ url: '/pages/openclaw/dashboard/dashboard' })
+  },
+
   goOpenClawConfig() {
     wx.navigateTo({ url: '/pages/openclaw/config/config' })
   }

@@ -1,0 +1,157 @@
+.page-oc-platform {
+  background: var(--bg-page, #F2F2F7);
+  min-height: 100vh;
+}
+
+.nav-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: var(--bg-page, #F2F2F7);
+}
+.nav-bar-inner {
+  display: flex; align-items: center; height: 88rpx; padding: 0 24rpx;
+}
+.nav-back {
+  width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center;
+}
+.nav-back-icon { font-size: 44rpx; color: var(--text-primary); font-weight: 300; }
+.nav-title {
+  flex: 1; text-align: center; font-size: 32rpx; font-weight: 600; color: var(--text-primary);
+}
+.nav-actions { width: 64rpx; display: flex; align-items: center; justify-content: center; }
+.nav-refresh { font-size: 40rpx; color: var(--text-primary); }
+.nav-refresh.spinning { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.content-scroll {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  padding: 16rpx 24rpx; box-sizing: border-box;
+}
+
+.section-card {
+  background: var(--bg-card, #fff); border-radius: 24rpx;
+  margin-bottom: 20rpx; overflow: hidden;
+}
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24rpx 24rpx 12rpx;
+}
+.section-title { font-size: 28rpx; font-weight: 600; color: var(--text-primary); }
+.section-count { font-size: 24rpx; color: var(--text-hint); }
+
+/* Gateway 健康卡片 */
+.gw-health-card { padding: 24rpx; }
+.gw-health-header {
+  display: flex; align-items: center; margin-bottom: 20rpx;
+}
+.gw-health-status {
+  width: 48rpx; height: 48rpx; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 20rpx; flex-shrink: 0;
+}
+.gw-health-status.online { background: rgba(76, 217, 100, 0.15); }
+.gw-health-status.offline { background: rgba(255, 59, 48, 0.15); }
+.gw-pulse-dot {
+  width: 20rpx; height: 20rpx; border-radius: 50%;
+}
+.gw-health-status.online .gw-pulse-dot {
+  background: #4CD964; box-shadow: 0 0 12rpx rgba(76,217,100,0.6);
+  animation: pulse 2s ease-in-out infinite;
+}
+.gw-health-status.offline .gw-pulse-dot { background: #FF3B30; }
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.7; }
+}
+.gw-health-info { flex: 1; }
+.gw-health-title { display: block; font-size: 30rpx; font-weight: 600; color: var(--text-primary); }
+.gw-health-url { display: block; font-size: 22rpx; color: var(--text-hint); margin-top: 4rpx; }
+.gw-health-ms { text-align: right; }
+.gw-health-ms-val { font-size: 36rpx; font-weight: 700; color: #34C759; }
+.gw-health-ms-unit { font-size: 20rpx; color: var(--text-hint); }
+
+.gw-actions { display: flex; gap: 16rpx; }
+.gw-action-btn {
+  flex: 1; text-align: center; padding: 16rpx 0;
+  border-radius: 16rpx; background: var(--bg-page, #F2F2F7);
+}
+.gw-action-text { font-size: 26rpx; color: var(--text-primary); font-weight: 500; }
+
+/* Agent 列表 */
+.agent-card {
+  margin: 0 16rpx 16rpx; padding: 20rpx;
+  border-radius: 20rpx; background: var(--bg-page, #F2F2F7);
+}
+.agent-card-top { display: flex; align-items: center; margin-bottom: 16rpx; }
+.agent-avatar {
+  width: 64rpx; height: 64rpx; border-radius: 16rpx;
+  background: rgba(255,107,53,0.1); display: flex;
+  align-items: center; justify-content: center;
+  margin-right: 16rpx; flex-shrink: 0;
+}
+.agent-emoji { font-size: 32rpx; }
+.agent-main { flex: 1; min-width: 0; }
+.agent-name-row { display: flex; align-items: center; gap: 12rpx; }
+.agent-name { font-size: 28rpx; font-weight: 600; color: var(--text-primary); }
+.agent-state-badge {
+  padding: 2rpx 12rpx; border-radius: 8rpx; font-size: 20rpx;
+}
+.agent-state-badge.working { background: rgba(76,217,100,0.15); }
+.agent-state-badge.working .agent-state-text { color: #34C759; }
+.agent-state-badge.online { background: rgba(52,199,89,0.15); }
+.agent-state-badge.online .agent-state-text { color: #34C759; }
+.agent-state-badge.idle { background: rgba(255,214,10,0.15); }
+.agent-state-badge.idle .agent-state-text { color: #FF9500; }
+.agent-state-badge.offline { background: rgba(142,142,147,0.15); }
+.agent-state-badge.offline .agent-state-text { color: #8E8E93; }
+.agent-state-text { font-size: 20rpx; font-weight: 500; }
+.agent-model { font-size: 22rpx; color: var(--text-hint); margin-top: 4rpx; }
+
+/* 平台标签 */
+.agent-platforms { display: flex; flex-wrap: wrap; gap: 10rpx; margin-bottom: 12rpx; }
+.platform-tag {
+  display: flex; align-items: center; gap: 6rpx;
+  padding: 4rpx 14rpx; border-radius: 12rpx;
+  background: rgba(0,0,0,0.04);
+}
+.platform-tag.connected { background: rgba(52,199,89,0.08); }
+.platform-tag.disconnected { background: rgba(142,142,147,0.08); }
+.platform-icon { font-size: 22rpx; }
+.platform-name { font-size: 20rpx; color: var(--text-primary); }
+.platform-dot { width: 8rpx; height: 8rpx; border-radius: 50%; }
+.platform-dot.on { background: #34C759; }
+.platform-dot.off { background: #C7C7CC; }
+
+/* Agent 统计 */
+.agent-stats-row { display: flex; margin-bottom: 12rpx; }
+.agent-stat { flex: 1; text-align: center; }
+.agent-stat-val { display: block; font-size: 28rpx; font-weight: 700; color: var(--text-primary); }
+.agent-stat-label { display: block; font-size: 20rpx; color: var(--text-hint); }
+
+.agent-action-row { display: flex; gap: 12rpx; }
+.agent-action-btn {
+  flex: 1; text-align: center; padding: 14rpx 0;
+  border-radius: 12rpx; background: var(--bg-card, #fff);
+}
+.agent-action-btn.primary { background: rgba(255,107,53,0.1); }
+.agent-action-text { font-size: 24rpx; color: var(--text-primary); font-weight: 500; }
+.agent-action-text.primary { color: #FF6B35; }
+
+/* 测试结果 */
+.test-results { padding: 0 24rpx 16rpx; }
+.test-result-item {
+  display: flex; align-items: center; gap: 12rpx;
+  padding: 12rpx 0; border-bottom: 1rpx solid var(--separator, #E5E5EA);
+}
+.test-result-item:last-child { border-bottom: none; }
+.test-result-icon { font-size: 28rpx; }
+.test-result-name { flex: 1; font-size: 26rpx; color: var(--text-primary); }
+.test-result-ms { font-size: 24rpx; color: var(--text-hint); }
+
+/* 空状态 */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 60rpx 0;
+}
+.empty-icon { font-size: 64rpx; margin-bottom: 12rpx; }
+.empty-text { font-size: 28rpx; color: var(--text-primary); font-weight: 500; }
+.empty-sub { font-size: 24rpx; color: var(--text-hint); margin-top: 8rpx; }

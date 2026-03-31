@@ -1,0 +1,476 @@
+/* OpenClaw 监控主页 */
+.page-oc-dashboard {
+  background: var(--bg-page, #F2F2F7);
+  min-height: 100vh;
+}
+
+/* 自定义导航栏 */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--bg-page, #F2F2F7);
+}
+
+.nav-bar-inner {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 24rpx;
+}
+
+.nav-back {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
+  font-size: 44rpx;
+  color: var(--text-primary);
+  font-weight: 300;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.nav-actions {
+  width: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-refresh {
+  font-size: 40rpx;
+  color: var(--text-primary);
+  transition: transform 0.3s;
+}
+
+.nav-refresh.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.content-scroll {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 16rpx 24rpx;
+  box-sizing: border-box;
+}
+
+/* ===== 通用卡片 ===== */
+.section-card {
+  background: var(--bg-card, #FFFFFF);
+  border-radius: 24rpx;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 24rpx 12rpx;
+}
+
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.section-icon {
+  font-size: 28rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-more {
+  font-size: 24rpx;
+  color: #FF6B35;
+  font-weight: 500;
+}
+
+/* ===== Gateway 状态卡片 ===== */
+.gateway-card {
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8C5A 100%);
+  color: #fff;
+}
+
+.gateway-card .section-title,
+.gateway-card .section-icon {
+  color: #fff;
+}
+
+.gateway-badge {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+  background: rgba(255,255,255,0.2);
+}
+
+.gateway-badge.online .badge-dot {
+  background: #4CD964;
+  box-shadow: 0 0 8rpx rgba(76, 217, 100, 0.6);
+}
+
+.gateway-badge.offline .badge-dot {
+  background: #FF3B30;
+}
+
+.badge-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+}
+
+.badge-text {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+.gateway-info-row {
+  display: flex;
+  padding: 16rpx 24rpx 24rpx;
+}
+
+.gw-info-item {
+  flex: 1;
+  text-align: center;
+}
+
+.gw-info-label {
+  display: block;
+  font-size: 20rpx;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 6rpx;
+}
+
+.gw-info-value {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.gw-info-value.success {
+  color: #4CD964;
+}
+
+.gw-info-value.danger {
+  color: #FFD60A;
+}
+
+/* ===== 功能导航网格 ===== */
+.nav-grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20rpx;
+  gap: 16rpx;
+}
+
+.nav-grid-item {
+  width: calc(50% - 8rpx);
+  background: var(--bg-card, #FFFFFF);
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.nav-grid-icon-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.nav-grid-icon-wrap.models { background: rgba(0, 122, 255, 0.1); }
+.nav-grid-icon-wrap.sessions { background: rgba(255, 107, 53, 0.1); }
+.nav-grid-icon-wrap.platform { background: rgba(88, 86, 214, 0.1); }
+.nav-grid-icon-wrap.config { background: rgba(142, 142, 147, 0.1); }
+
+.nav-grid-icon {
+  font-size: 36rpx;
+}
+
+.nav-grid-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4rpx;
+}
+
+.nav-grid-desc {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}
+
+/* ===== Bot 列表 ===== */
+.bot-list {
+  padding: 0 24rpx 16rpx;
+}
+
+.bot-item {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--separator, #E5E5EA);
+}
+
+.bot-item:last-child {
+  border-bottom: none;
+}
+
+.bot-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 107, 53, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.bot-emoji {
+  font-size: 36rpx;
+}
+
+.bot-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bot-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.bot-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bot-status-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bot-status-dot.working { background: #4CD964; box-shadow: 0 0 6rpx rgba(76,217,100,0.5); }
+.bot-status-dot.online { background: #34C759; }
+.bot-status-dot.idle { background: #FFD60A; }
+.bot-status-dot.offline { background: #C7C7CC; }
+
+.bot-model {
+  font-size: 22rpx;
+  color: var(--text-hint);
+  margin-top: 4rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bot-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.bot-stat-val {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #FF6B35;
+}
+
+.bot-stat-label {
+  font-size: 20rpx;
+  color: var(--text-hint);
+}
+
+/* ===== 模型网格 ===== */
+.model-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 8rpx 16rpx 16rpx;
+  gap: 12rpx;
+}
+
+.model-card {
+  width: calc(50% - 6rpx);
+  background: var(--bg-page, #F2F2F7);
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  box-sizing: border-box;
+}
+
+.model-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 6rpx;
+}
+
+.model-provider-dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.model-card-name {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.model-card-provider {
+  font-size: 20rpx;
+  color: var(--text-hint);
+  margin-bottom: 8rpx;
+}
+
+.model-card-status {
+  display: inline-block;
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  background: rgba(142,142,147,0.1);
+}
+
+.model-card-status.ok { background: rgba(52,199,89,0.1); }
+.model-card-status.ok .model-status-text { color: #34C759; }
+.model-card-status.error { background: rgba(255,59,48,0.1); }
+.model-card-status.error .model-status-text { color: #FF3B30; }
+
+.model-status-text {
+  font-size: 18rpx;
+  color: var(--text-hint);
+}
+
+.model-more {
+  padding: 16rpx 24rpx;
+  text-align: center;
+  border-top: 1rpx solid var(--separator, #E5E5EA);
+}
+
+.model-more-text {
+  font-size: 24rpx;
+  color: #FF6B35;
+  font-weight: 500;
+}
+
+/* ===== 统计概览 ===== */
+.stats-grid {
+  display: flex;
+  padding: 8rpx 16rpx 24rpx;
+}
+
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4rpx;
+}
+
+.stat-label {
+  font-size: 20rpx;
+  color: var(--text-hint);
+}
+
+/* ===== 空状态 ===== */
+.empty-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 0;
+}
+
+.empty-hint-icon {
+  font-size: 80rpx;
+  margin-bottom: 16rpx;
+}
+
+.empty-hint-text {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.empty-hint-sub {
+  font-size: 24rpx;
+  color: var(--text-hint);
+  margin-bottom: 32rpx;
+  text-align: center;
+  padding: 0 60rpx;
+}
+
+.empty-hint-btn {
+  padding: 16rpx 48rpx;
+  border-radius: 24rpx;
+  background: #FF6B35;
+}
+
+.empty-hint-btn-text {
+  font-size: 28rpx;
+  color: #fff;
+  font-weight: 500;
+}
+
+/* ===== 底部 ===== */
+.footer-info {
+  text-align: center;
+  padding: 20rpx 0;
+}
+
+.footer-text {
+  font-size: 22rpx;
+  color: var(--text-hint);
+}

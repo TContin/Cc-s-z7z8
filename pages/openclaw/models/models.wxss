@@ -1,0 +1,92 @@
+.page-oc-models { background: var(--bg-page, #F2F2F7); min-height: 100vh; }
+.nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: var(--bg-page, #F2F2F7); }
+.nav-bar-inner { display: flex; align-items: center; height: 88rpx; padding: 0 24rpx; }
+.nav-back { width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center; }
+.nav-back-icon { font-size: 44rpx; color: var(--text-primary); font-weight: 300; }
+.nav-title { flex: 1; text-align: center; font-size: 32rpx; font-weight: 600; color: var(--text-primary); }
+.nav-actions { width: 64rpx; display: flex; align-items: center; justify-content: center; }
+.nav-refresh { font-size: 40rpx; color: var(--text-primary); }
+.nav-refresh.spinning { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.content-scroll { position: fixed; left: 0; right: 0; bottom: 0; padding: 16rpx 24rpx; box-sizing: border-box; }
+
+/* 模型总数 */
+.model-summary {
+  display: flex; align-items: center; gap: 8rpx;
+  padding: 24rpx; background: var(--bg-card, #fff);
+  border-radius: 20rpx; margin-bottom: 16rpx;
+}
+.model-summary-count { font-size: 48rpx; font-weight: 700; color: #FF6B35; }
+.model-summary-label { font-size: 28rpx; color: var(--text-primary); flex: 1; }
+.model-probe-all {
+  padding: 12rpx 24rpx; border-radius: 16rpx;
+  background: rgba(255,107,53,0.1);
+}
+.model-probe-all.probing { background: rgba(142,142,147,0.1); }
+.probe-all-text { font-size: 24rpx; color: #FF6B35; font-weight: 500; }
+.model-probe-all.probing .probe-all-text { color: var(--text-hint); }
+
+/* 模型列表 */
+.model-list {
+  background: var(--bg-card, #fff); border-radius: 20rpx;
+  overflow: hidden; margin-bottom: 16rpx;
+}
+.model-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20rpx 20rpx 20rpx 0;
+  margin-left: 20rpx;
+  border-bottom: 1rpx solid var(--separator, #E5E5EA);
+}
+.model-item:last-child { border-bottom: none; }
+
+.model-item-left { display: flex; align-items: center; flex: 1; min-width: 0; }
+.model-color-bar {
+  width: 6rpx; height: 48rpx; border-radius: 3rpx;
+  margin-right: 16rpx; flex-shrink: 0;
+}
+.model-item-info { flex: 1; min-width: 0; }
+.model-item-name {
+  font-size: 28rpx; font-weight: 600; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;
+}
+.model-item-provider { font-size: 22rpx; color: var(--text-hint); margin-top: 2rpx; display: block; }
+
+.model-item-right { display: flex; align-items: center; gap: 12rpx; flex-shrink: 0; }
+
+/* 探测状态 badge */
+.model-probe-badge {
+  display: flex; align-items: center; gap: 6rpx;
+  padding: 4rpx 12rpx; border-radius: 10rpx;
+}
+.model-probe-badge.ok { background: rgba(52,199,89,0.1); }
+.model-probe-badge.ok .model-probe-text { color: #34C759; }
+.model-probe-badge.error { background: rgba(255,59,48,0.1); }
+.model-probe-badge.error .model-probe-text { color: #FF3B30; }
+.model-probe-badge.auth { background: rgba(255,149,0,0.1); }
+.model-probe-badge.auth .model-probe-text { color: #FF9500; }
+.model-probe-badge.timeout { background: rgba(142,142,147,0.1); }
+.model-probe-badge.timeout .model-probe-text { color: #8E8E93; }
+.model-probe-text { font-size: 20rpx; font-weight: 500; }
+.model-probe-ms { font-size: 18rpx; color: var(--text-hint); }
+
+/* 测试按钮 */
+.model-test-btn {
+  padding: 8rpx 20rpx; border-radius: 12rpx;
+  background: rgba(0,122,255,0.1);
+}
+.model-test-btn.testing { background: rgba(142,142,147,0.1); }
+.model-test-text { font-size: 24rpx; color: #007AFF; font-weight: 500; }
+.model-test-btn.testing .model-test-text { color: var(--text-hint); }
+
+/* 说明 */
+.model-note {
+  padding: 24rpx; background: var(--bg-card, #fff);
+  border-radius: 20rpx;
+}
+.model-note-text { font-size: 22rpx; color: var(--text-hint); line-height: 1.6; }
+
+/* 空状态 */
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 80rpx 0; }
+.empty-icon { font-size: 64rpx; margin-bottom: 12rpx; }
+.empty-text { font-size: 28rpx; color: var(--text-primary); font-weight: 500; }
+.empty-sub { font-size: 24rpx; color: var(--text-hint); margin-top: 8rpx; }

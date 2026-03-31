@@ -1,0 +1,177 @@
+<view class="page-oc-dashboard">
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar-inner">
+      <view class="nav-back" bindtap="goBack">
+        <text class="nav-back-icon">‹</text>
+      </view>
+      <text class="nav-title">🦞 OpenClaw 监控</text>
+      <view class="nav-actions">
+        <text class="nav-refresh {{refreshing ? 'spinning' : ''}}" bindtap="refreshAll">⟳</text>
+      </view>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="content-scroll" style="top: {{navBarHeight}}px;" refresher-enabled bindrefresherrefresh="onPullRefresh" refresher-triggered="{{refreshing}}">
+
+    <!-- ===== Gateway 状态卡片 ===== -->
+    <view class="section-card gateway-card">
+      <view class="section-header">
+        <view class="section-title-wrap">
+          <text class="section-icon">🔗</text>
+          <text class="section-title">Gateway 状态</text>
+        </view>
+        <view class="gateway-badge {{gatewayHealthy ? 'online' : 'offline'}}">
+          <view class="badge-dot"></view>
+          <text class="badge-text">{{gatewayHealthy ? '在线' : '离线'}}</text>
+        </view>
+      </view>
+      <view class="gateway-info-row">
+        <view class="gw-info-item">
+          <text class="gw-info-label">状态</text>
+          <text class="gw-info-value {{gatewayHealthy ? 'success' : 'danger'}}">{{gatewayStatus || '--'}}</text>
+        </view>
+        <view class="gw-info-item">
+          <text class="gw-info-label">模型数</text>
+          <text class="gw-info-value">{{totalModels || '--'}}</text>
+        </view>
+        <view class="gw-info-item">
+          <text class="gw-info-label">响应时间</text>
+          <text class="gw-info-value">{{responseMs || '--'}}ms</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 功能导航卡片 ===== -->
+    <view class="nav-grid">
+      <view class="nav-grid-item" bindtap="goModels">
+        <view class="nav-grid-icon-wrap models">
+          <text class="nav-grid-icon">🤖</text>
+        </view>
+        <text class="nav-grid-label">模型管理</text>
+        <text class="nav-grid-desc">{{totalModels || 0}} 个模型</text>
+      </view>
+      <view class="nav-grid-item" bindtap="goSessions">
+        <view class="nav-grid-icon-wrap sessions">
+          <text class="nav-grid-icon">💬</text>
+        </view>
+        <text class="nav-grid-label">会话监控</text>
+        <text class="nav-grid-desc">{{totalSessions || 0}} 个会话</text>
+      </view>
+      <view class="nav-grid-item" bindtap="goPlatform">
+        <view class="nav-grid-icon-wrap platform">
+          <text class="nav-grid-icon">📡</text>
+        </view>
+        <text class="nav-grid-label">平台监控</text>
+        <text class="nav-grid-desc">{{totalAgents || 0}} 个 Bot</text>
+      </view>
+      <view class="nav-grid-item" bindtap="goConfig">
+        <view class="nav-grid-icon-wrap config">
+          <text class="nav-grid-icon">⚙️</text>
+        </view>
+        <text class="nav-grid-label">配置</text>
+        <text class="nav-grid-desc">服务器设置</text>
+      </view>
+    </view>
+
+    <!-- ===== Bot 总览卡片 ===== -->
+    <view class="section-card" wx:if="{{agents.length > 0}}">
+      <view class="section-header">
+        <view class="section-title-wrap">
+          <text class="section-icon">🤖</text>
+          <text class="section-title">Bot 总览</text>
+        </view>
+        <text class="section-more" bindtap="goPlatform">全部 ›</text>
+      </view>
+      <view class="bot-list">
+        <view class="bot-item" wx:for="{{agents}}" wx:key="id" bindtap="goAgentDetail" data-id="{{item.id}}">
+          <view class="bot-avatar">
+            <text class="bot-emoji">{{item.emoji || '🤖'}}</text>
+          </view>
+          <view class="bot-info">
+            <view class="bot-name-row">
+              <text class="bot-name">{{item.name || item.id}}</text>
+              <view class="bot-status-dot {{item.state}}"></view>
+            </view>
+            <text class="bot-model">{{item.model || '--'}}</text>
+          </view>
+          <view class="bot-stats">
+            <text class="bot-stat-val">{{item.sessionCount || 0}}</text>
+            <text class="bot-stat-label">会话</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 模型概览 ===== -->
+    <view class="section-card" wx:if="{{models.length > 0}}">
+      <view class="section-header">
+        <view class="section-title-wrap">
+          <text class="section-icon">⚡</text>
+          <text class="section-title">可用模型</text>
+        </view>
+        <text class="section-more" bindtap="goModels">管理 ›</text>
+      </view>
+      <view class="model-grid">
+        <view class="model-card" wx:for="{{models}}" wx:key="id" wx:if="{{index < 6}}">
+          <view class="model-card-header">
+            <view class="model-provider-dot" style="background: {{item.color}};"></view>
+            <text class="model-card-name">{{item.name}}</text>
+          </view>
+          <text class="model-card-provider">{{item.owned_by || 'unknown'}}</text>
+          <view class="model-card-status {{item.probeStatus || ''}}">
+            <text class="model-status-text">{{item.probeStatusText || '未测试'}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="model-more" wx:if="{{models.length > 6}}" bindtap="goModels">
+        <text class="model-more-text">查看全部 {{models.length}} 个模型 ›</text>
+      </view>
+    </view>
+
+    <!-- ===== 统计概览 ===== -->
+    <view class="section-card stats-card">
+      <view class="section-header">
+        <view class="section-title-wrap">
+          <text class="section-icon">📊</text>
+          <text class="section-title">统计概览</text>
+        </view>
+      </view>
+      <view class="stats-grid">
+        <view class="stat-item">
+          <text class="stat-value">{{stats.totalTokens || '--'}}</text>
+          <text class="stat-label">总 Token</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{stats.totalMessages || '--'}}</text>
+          <text class="stat-label">总消息</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{stats.totalSessions || '--'}}</text>
+          <text class="stat-label">总会话</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{stats.avgResponseMs || '--'}}</text>
+          <text class="stat-label">平均响应</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-hint" wx:if="{{!loading && agents.length === 0 && models.length === 0}}">
+      <text class="empty-hint-icon">🦞</text>
+      <text class="empty-hint-text">暂无数据</text>
+      <text class="empty-hint-sub">请确保 OpenClaw 服务器已正确配置并运行</text>
+      <view class="empty-hint-btn" bindtap="goConfig">
+        <text class="empty-hint-btn-text">前往配置</text>
+      </view>
+    </view>
+
+    <!-- 底部更新时间 -->
+    <view class="footer-info" wx:if="{{lastUpdate}}">
+      <text class="footer-text">{{lastUpdate}} 更新</text>
+    </view>
+
+    <view style="height: 60rpx;"></view>
+  </scroll-view>
+</view>

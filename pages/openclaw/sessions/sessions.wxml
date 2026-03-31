@@ -1,0 +1,89 @@
+<view class="page-oc-sessions">
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar-inner">
+      <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+      <text class="nav-title">💬 会话监控</text>
+      <view class="nav-actions">
+        <text class="nav-refresh {{refreshing ? 'spinning' : ''}}" bindtap="refreshAll">⟳</text>
+      </view>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="content-scroll" style="top: {{navBarHeight}}px;" refresher-enabled bindrefresherrefresh="onPullRefresh" refresher-triggered="{{refreshing}}">
+
+    <!-- 筛选栏 -->
+    <view class="filter-bar">
+      <view class="filter-item {{currentFilter === 'all' ? 'active' : ''}}" bindtap="setFilter" data-type="all">
+        <text class="filter-text">全部</text>
+        <text class="filter-count">{{sessions.length}}</text>
+      </view>
+      <view class="filter-item {{currentFilter === 'dm' ? 'active' : ''}}" bindtap="setFilter" data-type="dm">
+        <text class="filter-text">私聊</text>
+      </view>
+      <view class="filter-item {{currentFilter === 'group' ? 'active' : ''}}" bindtap="setFilter" data-type="group">
+        <text class="filter-text">群聊</text>
+      </view>
+      <view class="filter-item {{currentFilter === 'cron' ? 'active' : ''}}" bindtap="setFilter" data-type="cron">
+        <text class="filter-text">定时</text>
+      </view>
+    </view>
+
+    <!-- 统计概览 -->
+    <view class="stats-row">
+      <view class="stats-item">
+        <text class="stats-val">{{totalSessions}}</text>
+        <text class="stats-label">总会话</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-val">{{totalTokens}}</text>
+        <text class="stats-label">总 Token</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-val">{{activeSessions}}</text>
+        <text class="stats-label">活跃</text>
+      </view>
+    </view>
+
+    <!-- 会话列表 -->
+    <view class="session-list" wx:if="{{filteredSessions.length > 0}}">
+      <view class="session-card" wx:for="{{filteredSessions}}" wx:key="key">
+        <view class="session-top">
+          <view class="session-type-badge {{item.typeClass}}">
+            <text class="session-type-icon">{{item.typeIcon}}</text>
+            <text class="session-type-text">{{item.typeLabel}}</text>
+          </view>
+          <text class="session-time">{{item.updatedAtText}}</text>
+        </view>
+
+        <view class="session-main">
+          <text class="session-key">{{item.displayKey}}</text>
+          <text class="session-target" wx:if="{{item.target}}">→ {{item.target}}</text>
+        </view>
+
+        <view class="session-stats-row">
+          <view class="session-stat">
+            <text class="session-stat-val">{{item.totalTokensText}}</text>
+            <text class="session-stat-label">Token</text>
+          </view>
+          <view class="session-stat">
+            <text class="session-stat-val">{{item.contextTokensText}}</text>
+            <text class="session-stat-label">上下文</text>
+          </view>
+          <view class="session-stat">
+            <text class="session-stat-val">{{item.systemSent ? '✅' : '❌'}}</text>
+            <text class="session-stat-label">System</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{!loading && filteredSessions.length === 0}}">
+      <text class="empty-icon">💬</text>
+      <text class="empty-text">暂无会话数据</text>
+      <text class="empty-sub">会话数据需要通过服务器文件读取</text>
+    </view>
+
+    <view style="height: 60rpx;"></view>
+  </scroll-view>
+</view>
