@@ -198,47 +198,46 @@
 
         <!-- 三个 Item 横排 -->
         <view class="dash-row">
-          <!-- Item 1: 会话 -->
+          <!-- Item 1: Gateway 状态 -->
+          <view class="dash-item">
+            <view class="dash-item-header">
+              <text class="dash-icon">🔗</text>
+              <text class="dash-label">Gateway</text>
+            </view>
+            <text class="dash-value {{openclawData.gatewayStatus === '运行中' || openclawData.gatewayStatus === '正常' ? 'openclaw-primary' : ''}}">{{openclawData.gatewayStatus || '--'}}</text>
+            <view class="dash-sub-row">
+              <text class="dash-sub">模型 {{openclawData.totalModels || '--'}} 个</text>
+            </view>
+          </view>
+
+          <!-- 分割线 -->
+          <view class="dash-divider"></view>
+
+          <!-- Item 2: 会话/消息（如有数据） -->
           <view class="dash-item">
             <view class="dash-item-header">
               <text class="dash-icon">💬</text>
               <text class="dash-label">会话</text>
             </view>
-            <text class="dash-value openclaw-primary">{{openclawData.totalSessions || '--'}}</text>
+            <text class="dash-value">{{openclawData.totalSessions || '--'}}</text>
             <view class="dash-sub-row">
-              <text class="dash-sub">活跃 {{openclawData.activeSessions || '--'}}</text>
+              <text class="dash-sub">消息 {{openclawData.totalMessages || '--'}}</text>
             </view>
           </view>
 
           <!-- 分割线 -->
           <view class="dash-divider"></view>
 
-          <!-- Item 2: 消息量 -->
-          <view class="dash-item">
-            <view class="dash-item-header">
-              <text class="dash-icon">📨</text>
-              <text class="dash-label">消息量</text>
-            </view>
-            <text class="dash-value">{{openclawData.totalMessages || '--'}}</text>
-            <view class="dash-sub-row">
-              <text class="dash-sub">Token {{openclawData.totalTokens || '--'}}</text>
-            </view>
-          </view>
-
-          <!-- 分割线 -->
-          <view class="dash-divider"></view>
-
-          <!-- Item 3: 模型分布 -->
+          <!-- Item 3: 模型列表 -->
           <view class="dash-item dash-item-models">
             <view class="dash-item-header">
               <text class="dash-icon">🤖</text>
-              <text class="dash-label">模型分布</text>
+              <text class="dash-label">可用模型</text>
             </view>
             <view class="model-list" wx:if="{{openclawModels.length > 0}}">
               <view class="model-mini-item" wx:for="{{openclawModels}}" wx:key="name" wx:if="{{index < 4}}">
                 <view class="model-dot" style="background: {{item.color}};"></view>
                 <text class="model-mini-name">{{item.name}}</text>
-                <text class="model-mini-count">{{item.messages}}次</text>
               </view>
               <view class="model-mini-item more" wx:if="{{openclawModels.length > 4}}">
                 <text class="model-mini-name more-text">+{{openclawModels.length - 4}} 更多</text>
@@ -248,8 +247,8 @@
           </view>
         </view>
 
-        <!-- Token 速览 -->
-        <view class="cost-section openclaw-token-section">
+        <!-- Token 速览（如有数据则展示） -->
+        <view class="cost-section openclaw-token-section" wx:if="{{openclawData.totalTokens !== '--' || openclawData.totalCost !== '--'}}">
           <view class="cost-row">
             <view class="cost-item">
               <text class="cost-label">输入 Token</text>

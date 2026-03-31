@@ -17,6 +17,7 @@ function httpRequest(urlStr, options = {}) {
       method: options.method || 'GET',
       headers: {
         'Accept': 'application/json',
+        'Content-Type': 'application/json',
         'User-Agent': 'MiniProgram-OpenClaw-Monitor/1.0',
         ...(options.headers || {})
       },
@@ -27,16 +28,38 @@ function httpRequest(urlStr, options = {}) {
       let body = ''
       res.on('data', chunk => body += chunk)
       res.on('end', () => {
+        // 检查 content-type 是否为 JSON
+        const ct = res.headers['content-type'] || ''
+        const isJson = ct.includes('application/json') || ct.includes('text/json')
         let parsed
-        try { parsed = JSON.parse(body) } catch (e) { parsed = body }
-        resolve({ statusCode: res.statusCode, data: parsed })
+        try { parsed = JSON.parse(body) } catch (e) {
+          // 如果不是 JSON，返回前 200 字符帮助调试
+          parsed = { _raw: body.substring(0, 200), _isHtml: body.trim().startsWith('<') }
+        }
+        resolve({
+          statusCode: res.statusCode,
+          contentType: ct,
+          data: parsed
+        })
       })
     })
 
     req.on('error', reject)
     req.on('timeout', () => { req.destroy(); reject(new Error('请求超时')) })
+
+    if (options.body) {
+      req.write(typeof options.body === 'string' ? options.body : JSON.stringify(options.body))
+    }
     req.end()
   })
+}
+
+// 判断返回的是否为有效 JSON 数据（非 HTML）
+function isValidJsonData(res) {
+  if (!res || res.statusCode !== 200) return false
+  if (res.data && res.data._isHtml) return false
+  if (typeof res.data === 'string' && res.data.trim().startsWith('<')) return false
+  return true
 }
 
 exports.main = async (event) => {
@@ -49,124 +72,106 @@ exports.main = async (event) => {
   // 去掉末尾斜杠
   const baseUrl = serverUrl.replace(/\/+$/, '')
 
+  // OpenClaw Gateway 认证：Bearer token
   const headers = {}
   if (apiToken) {
     headers['Authorization'] = `Bearer ${apiToken}`
   }
 
   try {
-    // OpenClaw Gateway 实际路径:
-    // GET /health          -> {"status":"live"}
-    // GET /status          -> 系统状态
-    // GET /v1/sessions     -> 会话列表
-    // GET /v1/models       -> 模型列表
+    // =====================================================
+    // OpenClaw Gateway 可用的 REST 端点（基于官方文档）:
+    //
+    // GET  /health              → {"ok":true,"status":"live"}
+    // GET  /v1/models           → OpenAI 兼容的模型列表
+    // GET  /v1/models/{id}      → 单个模型详情
+    // POST /v1/chat/completions → 聊天补全
+    // POST /v1/embeddings       → 嵌入向量
+    // POST /v1/responses        → Agent 响应
+    //
+    // 注意: 会话统计等数据需通过 WebSocket 获取，
+    //       /v1/sessions 和 /status 不是 REST 端点
+    // =====================================================
 
-    // ========== 获取仪表盘概览（会话 + 消息量 + 模型分布） ==========
+    // ========== 获取仪表盘概览 ==========
     if (action === 'getDashboard') {
-      // 并行请求: 会话列表 + 系统状态 + 模型列表 + 健康检查
-      const [sessionsRes, statusRes, modelsRes, healthRes] = await Promise.all([
-        httpRequest(`${baseUrl}/v1/sessions`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
-        httpRequest(`${baseUrl}/status`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
-        httpRequest(`${baseUrl}/v1/models`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
-        httpRequest(`${baseUrl}/health`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message }))
+      // 并行请求可用的 REST 端点
+      const [healthRes, modelsRes] = await Promise.all([
+        httpRequest(`${baseUrl}/health`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message })),
+        httpRequest(`${baseUrl}/v1/models`, { headers }).catch(e => ({ statusCode: 0, data: null, error: e.message }))
       ])
 
-      // ---- 解析会话数据 (GET /v1/sessions) ----
-      let totalSessions = 0
-      let activeSessions = 0
-      let totalMessages = 0
-      let totalTokens = 0
-      let totalInputTokens = 0
-      let totalOutputTokens = 0
-      let totalCost = 0
-      const modelMap = {} // { modelName: { messages, tokens } }
-
-      if (sessionsRes.statusCode === 200 && sessionsRes.data) {
-        const sessions = Array.isArray(sessionsRes.data) ? sessionsRes.data
-          : (sessionsRes.data.sessions || sessionsRes.data.data || [])
-        totalSessions = sessions.length
-
-        for (const s of sessions) {
-          // 活跃会话
-          if (s.active || s.status === 'active') activeSessions++
-
-          // 消息计数
-          const msgCount = s.messages || s.message_count || s.messageCount || s.turns || 0
-          totalMessages += msgCount
-
-          // Token 统计
-          const inTk = s.inputTokens || s.input_tokens || s.promptTokens || s.prompt_tokens || 0
-          const outTk = s.outputTokens || s.output_tokens || s.completionTokens || s.completion_tokens || 0
-          const tk = s.totalTokens || s.total_tokens || s.tokens || (inTk + outTk)
-          totalInputTokens += inTk
-          totalOutputTokens += outTk
-          totalTokens += tk
-
-          // 费用
-          const cost = s.cost || s.totalCost || s.total_cost || 0
-          totalCost += cost
-
-          // 模型分布统计
-          const model = s.model || s.modelId || s.model_id || s.agentId || 'unknown'
-          if (!modelMap[model]) modelMap[model] = { messages: 0, tokens: 0 }
-          modelMap[model].messages += msgCount
-          modelMap[model].tokens += tk
-        }
+      // 调试信息
+      const debug = {
+        health: { status: healthRes.statusCode, contentType: healthRes.contentType, isJson: isValidJsonData(healthRes) },
+        models: { status: modelsRes.statusCode, contentType: modelsRes.contentType, isJson: isValidJsonData(modelsRes) }
       }
 
-      // ---- 从 /status 补充系统级统计（如有） ----
-      if (statusRes.statusCode === 200 && statusRes.data) {
-        const st = statusRes.data
-        if (st.totalMessages && st.totalMessages > totalMessages) totalMessages = st.totalMessages
-        if (st.totalTokens && st.totalTokens > totalTokens) totalTokens = st.totalTokens
-        if (st.totalSessions && st.totalSessions > totalSessions) totalSessions = st.totalSessions
-        if (st.activeSessions && st.activeSessions > activeSessions) activeSessions = st.activeSessions
-        if (st.totalCost && st.totalCost > totalCost) totalCost = st.totalCost
+      // ---- 解析健康状态 ----
+      const healthy = healthRes.statusCode === 200
+      const healthData = healthy ? healthRes.data : null
 
-        const stModels = st.models || st.modelDistribution || st.model_distribution || null
-        if (stModels && typeof stModels === 'object' && !Array.isArray(stModels)) {
-          Object.entries(stModels).forEach(([name, data]) => {
-            if (!modelMap[name]) modelMap[name] = { messages: 0, tokens: 0 }
-            if (typeof data === 'object') {
-              modelMap[name].messages = Math.max(modelMap[name].messages, data.messages || data.count || 0)
-              modelMap[name].tokens = Math.max(modelMap[name].tokens, data.tokens || 0)
-            }
-          })
+      // ---- 解析模型列表 (GET /v1/models) ----
+      // OpenAI 兼容格式: { object: "list", data: [{ id, object, created, owned_by }] }
+      const modelMap = {}
+
+      if (isValidJsonData(modelsRes)) {
+        const modelsData = modelsRes.data
+        // 尝试多种可能的数据结构
+        let modelsList = []
+        if (Array.isArray(modelsData)) {
+          modelsList = modelsData
+        } else if (modelsData && Array.isArray(modelsData.data)) {
+          modelsList = modelsData.data
+        } else if (modelsData && Array.isArray(modelsData.models)) {
+          modelsList = modelsData.models
         }
-      }
 
-      // ---- 从 /v1/models 补充可用模型列表 ----
-      if (modelsRes.statusCode === 200 && modelsRes.data) {
-        const modelsList = Array.isArray(modelsRes.data) ? modelsRes.data
-          : (modelsRes.data.models || modelsRes.data.data || [])
         for (const m of modelsList) {
           const name = m.id || m.name || m.model || ''
-          if (name && !modelMap[name]) {
-            modelMap[name] = { messages: 0, tokens: 0 }
+          if (name) {
+            modelMap[name] = {
+              messages: 0,
+              tokens: 0,
+              owned_by: m.owned_by || '',
+              created: m.created || 0
+            }
           }
         }
+
+        debug.modelsCount = modelsList.length
+        // 记录第一个模型的结构以帮助调试
+        if (modelsList.length > 0) {
+          debug.modelSample = Object.keys(modelsList[0])
+        }
+      } else {
+        // /v1/models 返回了 HTML 而非 JSON，可能认证问题
+        debug.modelsError = modelsRes.data && modelsRes.data._raw
+          ? '返回了HTML而非JSON: ' + modelsRes.data._raw.substring(0, 100)
+          : '请求失败 HTTP ' + modelsRes.statusCode
       }
 
-      // 转换 modelMap 为数组并排序
+      // 转换 modelMap 为数组
       const modelDistribution = Object.entries(modelMap)
-        .filter(([name]) => name !== 'unknown')
-        .map(([name, data]) => ({ name, messages: data.messages, tokens: data.tokens }))
-        .sort((a, b) => b.messages - a.messages)
+        .filter(([name]) => name !== 'unknown' && name !== '')
+        .map(([name, data]) => ({
+          name,
+          messages: data.messages,
+          tokens: data.tokens,
+          owned_by: data.owned_by
+        }))
 
       return {
         success: true,
         data: {
-          sessions: { total: totalSessions, active: activeSessions },
-          messages: {
-            total: totalMessages,
-            tokens: totalTokens,
-            inputTokens: totalInputTokens,
-            outputTokens: totalOutputTokens
-          },
+          sessions: { total: 0, active: 0 },  // WebSocket 才能获取，REST 不可用
+          messages: { total: 0, tokens: 0, inputTokens: 0, outputTokens: 0 },
           models: modelDistribution,
-          cost: totalCost,
-          healthy: healthRes.statusCode === 200
-        }
+          cost: 0,
+          healthy: healthy,
+          gatewayStatus: healthData ? healthData.status : 'unknown'
+        },
+        debug: debug  // 调试信息，帮助定位问题
       }
     }
 
@@ -176,23 +181,34 @@ exports.main = async (event) => {
       return {
         success: res.statusCode === 200,
         statusCode: res.statusCode,
+        contentType: res.contentType,
         data: res.data
       }
     }
 
-    // ========== 获取系统状态 ==========
-    if (action === 'getStatus') {
-      const res = await httpRequest(`${baseUrl}/status`, { headers })
-      if (res.statusCode === 200) {
+    // ========== 获取模型列表 ==========
+    if (action === 'getModels') {
+      const res = await httpRequest(`${baseUrl}/v1/models`, { headers })
+      if (isValidJsonData(res)) {
         return { success: true, data: res.data }
       }
-      return { success: false, error: `系统状态获取失败 (HTTP ${res.statusCode})` }
+      return {
+        success: false,
+        error: `模型列表获取失败 (HTTP ${res.statusCode})`,
+        contentType: res.contentType,
+        hint: res.data && res.data._isHtml ? '返回了HTML页面而非JSON，请检查Token认证' : ''
+      }
     }
 
     // ========== 通用代理（直接转发路径） ==========
     if (action === 'proxy' && event.path) {
       const res = await httpRequest(`${baseUrl}${event.path}`, { headers })
-      return { success: true, statusCode: res.statusCode, data: res.data }
+      return {
+        success: isValidJsonData(res),
+        statusCode: res.statusCode,
+        contentType: res.contentType,
+        data: res.data
+      }
     }
 
     return { success: false, error: '未知 action: ' + action }

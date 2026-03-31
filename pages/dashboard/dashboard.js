@@ -35,6 +35,8 @@ Page({
     openclawLoading: false,
     openclawLastUpdate: '',
     openclawData: {
+      gatewayStatus: '--',
+      totalModels: '--',
       totalSessions: '--',
       activeSessions: '--',
       totalMessages: '--',
@@ -456,6 +458,11 @@ Page({
         })
       })
 
+      // 打印调试信息
+      if (res.debug) {
+        console.log('[OpenClaw] 调试信息:', JSON.stringify(res.debug))
+      }
+
       if (res.success && res.data) {
         const d = res.data
         const sessions = d.sessions || {}
@@ -465,20 +472,28 @@ Page({
         // 模型颜色列表
         const colors = ['#007AFF', '#FF9500', '#AF52DE', '#FF3B30', '#34C759', '#5AC8FA', '#FF2D55', '#FFCC00']
 
+        // Gateway 状态映射
+        const statusMap = { 'live': '运行中', 'ok': '正常', 'starting': '启动中' }
+        const gwStatus = d.gatewayStatus || 'unknown'
+        const gwStatusText = statusMap[gwStatus] || gwStatus
+
         this.setData({
           openclawData: {
-            totalSessions: (sessions.total || 0) + '',
-            activeSessions: (sessions.active || 0) + '',
-            totalMessages: (messages.total || 0) + '',
-            totalTokens: this.formatTokens(messages.tokens || 0),
-            inputTokens: this.formatTokens(messages.inputTokens || 0),
-            outputTokens: this.formatTokens(messages.outputTokens || 0),
-            totalCost: d.cost ? ('$' + Number(d.cost).toFixed(2)) : '--'
+            gatewayStatus: d.healthy ? gwStatusText : '离线',
+            totalModels: models.length + '',
+            totalSessions: sessions.total > 0 ? sessions.total + '' : '--',
+            activeSessions: sessions.active > 0 ? sessions.active + '' : '--',
+            totalMessages: messages.total > 0 ? messages.total + '' : '--',
+            totalTokens: messages.tokens > 0 ? this.formatTokens(messages.tokens) : '--',
+            inputTokens: messages.inputTokens > 0 ? this.formatTokens(messages.inputTokens) : '--',
+            outputTokens: messages.outputTokens > 0 ? this.formatTokens(messages.outputTokens) : '--',
+            totalCost: d.cost && d.cost > 0 ? ('$' + Number(d.cost).toFixed(2)) : '--'
           },
           openclawModels: models.map((m, i) => ({
             name: m.name || '--',
             messages: m.messages || 0,
             tokens: this.formatTokens(m.tokens || 0),
+            owned_by: m.owned_by || '',
             color: colors[i % colors.length]
           })),
           openclawLoading: false,
