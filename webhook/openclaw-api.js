@@ -220,6 +220,7 @@ function getSessions(agentId) {
 function getStats() {
   const agentsDir = path.join(OPENCLAW_HOME, 'agents')
   let totalTokens = 0, totalMessages = 0, totalSessions = 0
+  let totalInputTokens = 0, totalOutputTokens = 0
 
   try {
     const dirs = fs.readdirSync(agentsDir).filter(d =>
@@ -227,20 +228,16 @@ function getStats() {
     )
 
     dirs.forEach(agentId => {
-      // 统计会话
       const sessionsFile = path.join(agentsDir, agentId, 'sessions', 'sessions.json')
       const sessions = readJsonFile(sessionsFile)
       if (sessions && typeof sessions === 'object') {
         totalSessions += Object.keys(sessions).length
-        Object.values(sessions).forEach(s => {
-          if (s.totalTokens) totalTokens += s.totalTokens
-        })
       }
 
-      // 统计消息（扫描 JSONL 文件）
+      // 扫描 JSONL 文件
       const sessionsDir = path.join(agentsDir, agentId, 'sessions')
       try {
-        const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith('.jsonl'))
+        const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith('.jsonl') && !f.includes('.deleted.'))
         files.forEach(f => {
           try {
             const content = fs.readFileSync(path.join(sessionsDir, f), 'utf-8')
@@ -248,7 +245,16 @@ function getStats() {
             lines.forEach(line => {
               try {
                 const obj = JSON.parse(line)
-                if (obj.type === 'message') totalMessages++
+                if (obj.type !== 'message') return
+                totalMessages++
+                // usage 在 obj.message.usage 中
+                const msg = obj.message || {}
+                if (msg.role === 'assistant' && msg.usage) {
+                  const u = msg.usage
+                  totalInputTokens += u.input || 0
+                  totalOutputTokens += u.output || 0
+                  totalTokens += u.totalTokens || ((u.input || 0) + (u.output || 0))
+                }
               } catch (e) {}
             })
           } catch (e) {}
@@ -257,7 +263,7 @@ function getStats() {
     })
   } catch (e) {}
 
-  return { totalTokens, totalMessages, totalSessions, avgResponseMs: 0 }
+  return { totalTokens, totalMessages, totalSessions, inputTokens: totalInputTokens, outputTokens: totalOutputTokens, avgResponseMs: 0 }
 }
 
 // 获取详细统计（日/周/月维度）
@@ -317,12 +323,13 @@ function getStatsDetail() {
 
                 dayMap[date].messageCount++
 
-                // Token 统计（只统计 assistant 消息的 usage）
-                if (obj.role === 'assistant' && obj.usage) {
-                  const u = obj.usage
-                  dayMap[date].inputTokens += u.input || u.inputTokens || u.prompt_tokens || 0
-                  dayMap[date].outputTokens += u.output || u.outputTokens || u.completion_tokens || 0
-                  dayMap[date].totalTokens += u.totalTokens || u.total_tokens || ((u.input || 0) + (u.output || 0))
+                // Token 统计：usage 在 obj.message.usage 中
+                const msg = obj.message || {}
+                if (msg.role === 'assistant' && msg.usage) {
+                  const u = msg.usage
+                  dayMap[date].inputTokens += u.input || 0
+                  dayMap[date].outputTokens += u.output || 0
+                  dayMap[date].totalTokens += u.totalTokens || ((u.input || 0) + (u.output || 0))
                 }
               } catch (e) {}
             })
@@ -444,8 +451,124 @@ const server = http.createServer((req, res) => {
     return jsonResponse(res, { success: true, data: detail })
   }
 
+  // 模型探测：直接向上游 provider 发请求
+  if (pathname === '/api/probe-model') {
+    const modelId = url.searchParams.get('modelId')
+    if (!modelId) return jsonResponse(res, { success: false, error: '未指定 modelId' }, 400)
+
+    probeModel(config, modelId).then(result => {
+      jsonResponse(res, result)
+    }).catch(err => {
+      jsonResponse(res, { success: false, error: err.message })
+    })
+    return // 异步处理
+  }
+
   jsonResponse(res, { error: 'not found' }, 404)
 })
+
+// 模型探测：直接向上游 provider 发请求
+async function probeModel(config, modelId) {
+  if (!config || !config.models || !config.models.providers) {
+    return { success: false, error: '无模型配置' }
+  }
+
+  // 找到这个模型属于哪个 provider
+  const providers = config.models.providers
+  let targetProvider = null
+  let targetModel = null
+
+  for (const [pid, prov] of Object.entries(providers)) {
+    const found = (prov.models || []).find(m => m.id === modelId || m.name === modelId)
+    if (found) {
+      targetProvider = { id: pid, ...prov }
+      targetModel = found
+      break
+    }
+  }
+
+  if (!targetProvider) {
+    return { success: false, error: `未找到模型 ${modelId}` }
+  }
+
+  const baseUrl = targetProvider.baseUrl
+  const apiKey = targetProvider.apiKey
+  const api = targetProvider.api || 'openai-completions'
+
+  if (!baseUrl || !apiKey) {
+    return { success: false, error: '缺少 baseUrl 或 apiKey' }
+  }
+
+  try {
+    const https = require('https')
+    const http = require('http')
+    const startTime = Date.now()
+
+    // 构造请求
+    let reqUrl, reqBody, reqHeaders
+
+    if (api === 'anthropic-messages') {
+      reqUrl = `${baseUrl}/v1/messages`
+      reqHeaders = {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      }
+      reqBody = JSON.stringify({
+        model: modelId,
+        max_tokens: 8,
+        messages: [{ role: 'user', content: 'Reply OK.' }]
+      })
+    } else {
+      // OpenAI 兼容
+      reqUrl = `${baseUrl}/chat/completions`
+      reqHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      }
+      reqBody = JSON.stringify({
+        model: modelId,
+        max_tokens: 8,
+        messages: [{ role: 'user', content: 'Reply OK.' }]
+      })
+    }
+
+    return new Promise((resolve) => {
+      const urlObj = new URL(reqUrl)
+      const isHttps = urlObj.protocol === 'https:'
+      const lib = isHttps ? https : http
+
+      const req = lib.request({
+        hostname: urlObj.hostname,
+        port: urlObj.port || (isHttps ? 443 : 80),
+        path: urlObj.pathname + urlObj.search,
+        method: 'POST',
+        headers: reqHeaders,
+        timeout: 15000
+      }, (res) => {
+        let body = ''
+        res.on('data', chunk => body += chunk)
+        res.on('end', () => {
+          const elapsed = Date.now() - startTime
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve({ success: true, elapsed, statusCode: res.statusCode })
+          } else {
+            let errMsg = `HTTP ${res.statusCode}`
+            try { const d = JSON.parse(body); errMsg = d.error?.message || errMsg } catch (e) {}
+            resolve({ success: false, error: errMsg, elapsed, statusCode: res.statusCode })
+          }
+        })
+      })
+
+      req.on('error', (e) => resolve({ success: false, error: e.message, elapsed: Date.now() - startTime }))
+      req.on('timeout', () => { req.destroy(); resolve({ success: false, error: '超时', elapsed: Date.now() - startTime }) })
+      req.write(reqBody)
+      req.end()
+    })
+  } catch (e) {
+    return { success: false, error: e.message }
+  }
+}
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`[OpenClaw Config API] Running on http://127.0.0.1:${PORT}`)

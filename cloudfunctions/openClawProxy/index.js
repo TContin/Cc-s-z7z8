@@ -170,8 +170,8 @@ exports.main = async (event) => {
           messages: {
             total: stats.totalMessages || 0,
             tokens: stats.totalTokens || 0,
-            inputTokens: 0,
-            outputTokens: 0
+            inputTokens: stats.inputTokens || 0,
+            outputTokens: stats.outputTokens || 0
           },
           models: modelDistribution,
           cost: 0,
@@ -276,8 +276,14 @@ exports.main = async (event) => {
         return { success: false, error: '未指定模型 ID' }
       }
 
+      // 优先通过配置 API 测试（直接向上游 provider 发请求）
+      const probeResult = await fetchFromConfigApi(`/api/probe-model?modelId=${encodeURIComponent(modelId)}`)
+      if (probeResult !== null) {
+        return probeResult
+      }
+
+      // fallback: 通过 Gateway REST API
       try {
-        // 向模型发送极简请求验证可用性
         const res = await httpRequest(`${baseUrl}/v1/chat/completions`, {
           method: 'POST',
           headers,
@@ -289,11 +295,10 @@ exports.main = async (event) => {
           }
         })
 
-        if (res.statusCode === 200 && isValidJsonData(res)) {
+        if (res.statusCode === 200 && !res.data._isHtml) {
           return { success: true, data: res.data }
         }
 
-        // 检查具体错误
         const errMsg = res.data && typeof res.data === 'object'
           ? (res.data.error && res.data.error.message) || JSON.stringify(res.data).substring(0, 100)
           : `HTTP ${res.statusCode}`
