@@ -103,6 +103,8 @@ Page({
         messageCount: msg,
         totalTokens: total,
         totalTokensText: this.formatTokens(total),
+        inputText: this.formatTokens(input),
+        outputText: this.formatTokens(output),
         inputHeight: maxToken > 0 ? Math.max(4, Math.round(input / maxToken * MAX_BAR_HEIGHT)) : 0,
         outputHeight: maxToken > 0 ? Math.max(4, Math.round(output / maxToken * MAX_BAR_HEIGHT)) : 0,
         msgHeight: maxMsg > 0 ? Math.max(4, Math.round(msg / maxMsg * MAX_BAR_HEIGHT)) : 0

@@ -48,9 +48,14 @@
       <view class="chart-body" wx:if="{{chartData.length > 0}}">
         <view class="chart-area">
           <view class="chart-bar-group" wx:for="{{chartData}}" wx:key="date">
+            <text class="bar-value-label" wx:if="{{item.totalTokensText !== '0'}}">{{item.totalTokensText}}</text>
             <view class="chart-bar-wrap">
-              <view class="chart-bar input" style="height: {{item.inputHeight}}rpx;" wx:if="{{item.inputHeight > 0}}"></view>
-              <view class="chart-bar output" style="height: {{item.outputHeight}}rpx;" wx:if="{{item.outputHeight > 0}}"></view>
+              <view class="chart-bar input" style="height: {{item.inputHeight}}rpx;" wx:if="{{item.inputHeight > 0}}">
+                <text class="bar-inner-label" wx:if="{{item.inputText !== '0'}}">{{item.inputText}}</text>
+              </view>
+              <view class="chart-bar output" style="height: {{item.outputHeight}}rpx;" wx:if="{{item.outputHeight > 0}}">
+                <text class="bar-inner-label" wx:if="{{item.outputText !== '0'}}">{{item.outputText}}</text>
+              </view>
             </view>
             <text class="chart-bar-label">{{item.shortDate}}</text>
           </view>
@@ -79,6 +84,7 @@
       <view class="chart-body" wx:if="{{chartData.length > 0}}">
         <view class="chart-area">
           <view class="chart-bar-group" wx:for="{{chartData}}" wx:key="date">
+            <text class="bar-value-label msg">{{item.messageCount}}</text>
             <view class="chart-bar-wrap">
               <view class="chart-bar msg" style="height: {{item.msgHeight}}rpx;" wx:if="{{item.msgHeight > 0}}"></view>
             </view>

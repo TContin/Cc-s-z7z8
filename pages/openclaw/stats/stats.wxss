@@ -68,6 +68,23 @@
   max-width: 100%; text-align: center;
 }
 
+/* 柱子上方数值标签 */
+.bar-value-label {
+  font-size: 18rpx; font-weight: 600;
+  color: var(--text-primary); text-align: center;
+  margin-bottom: 4rpx; white-space: nowrap;
+}
+.bar-value-label.msg { color: #FF6B35; }
+
+/* 柱内标签 */
+.bar-inner-label {
+  font-size: 14rpx; color: #fff;
+  text-align: center; width: 100%;
+  display: block; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+  padding: 2rpx 0;
+}
+
 .chart-legend { display: flex; justify-content: center; gap: 24rpx; margin-top: 12rpx; }
 .legend-item { display: flex; align-items: center; gap: 6rpx; }
 .legend-dot { width: 14rpx; height: 14rpx; border-radius: 3rpx; }
